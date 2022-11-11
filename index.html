@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Sedaro Nano</title>
+    <link rel="icon" href="https://satellite.sedaro.com/favicon.ico" />
+  </head>
+
+  <body>
+    <div id="plot" style="position: fixed; width: 100%; height: 100%; left: 0; top: 0;""></div>
+    <script src="data.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.16.1.min.js"></script>
+    <script>
+      let plotData = Object.keys(data).map((key) => {
+        return {
+          x: data[key].map((d) => d.x),
+          y: data[key].map((d) => d.y),
+        };
+      });
+
+      Plotly.newPlot(
+        document.getElementById('plot'), 
+        plotData,
+        { yaxis: { scaleanchor: 'x' } }, 
+        { responsive: true }
+      );
+    </script>
+  </body>
+</html>
