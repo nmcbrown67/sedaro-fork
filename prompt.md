@@ -11,14 +11,14 @@
 
 ### Some Project Ideas
 
-- Front End:
-  - Set up a framework like React
-  - Add cool visualizations
-  - Improve efficiency/caching
 - Sim Bed:
   - Improve the Q-Range KV Store data structure
   - Make the system more generic/extensible
   - Make it fast
+- Front End:
+  - Set up a framework like React
+  - Add cool visualizations
+  - Improve efficiency/caching
 - Data:
   - Utilize a better persistence layer than a js file
   - Do some statistical analysis on the data
@@ -27,4 +27,8 @@
   - Improve the numerical stability of the simulation functions
   - Implement new components
   - Analyze the sensitivity to initial conditions
-- Whatever you want, these are just suggestions to get you thinking
+- Etc
+  - Port to a language of your choice
+  - Set up testing
+  - Containerize
+- Whatever you want; these are just suggestions to get you thinking

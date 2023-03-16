@@ -12,12 +12,18 @@
     <script src="data.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.16.1.min.js"></script>
     <script>
-      let plotData = Object.keys(data).map((key) => {
-        return {
-          x: data[key].map((d) => d.x),
-          y: data[key].map((d) => d.y),
-        };
-      });
+      console.log("data:", data);
+
+      let plotData = {};
+      for (let [t0, t1, frame] of data) {
+        for (let [agentId, { x, y }] of Object.entries(frame)) {
+          plotData[agentId] = plotData[agentId] || {x: [], y: []};
+          plotData[agentId].x.push(x);
+          plotData[agentId].y.push(y);
+        }
+      }
+      plotData = Object.values(plotData);
+      console.log("plotData:", plotData);
 
       Plotly.newPlot(
         document.getElementById('plot'), 
