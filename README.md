@@ -1,27 +1,36 @@
 
 # Sedaro Nano
 
-Interview test idea: build the simplest possible version of Sedaro with:
-
-- **sim bed**: repeatedly runs a python function of type `(state:dict, time:float, timeStep:float) -> state:dict`. maybe incorporate the naive q-range store by using 2 "engines" with different time steps.
-- **data service**: output dicts are written to a json file as a list of state dicts
-- **frontend**: single minimal html+js file that imports the data file and plots it (ex: plotly)
-- **mod sim**: the actual python function that propagates an orbit for example but does so inaccurately with euler's method or something.
-
-We give them a folder with 2 files: 
-- a jupyter notebook that runs the sim, outputs the data, and opens the html in a browser
-- an html file that plots the data
-
-Let them improve it however they wish. This gives them an opportunity to show off their skills while also giving them a (super) high level view of what we sell.
-
-## TODO
-
-- Include a naive Q-Range KV Store so people can effectively do the current mini project
-- Write a prompt
-  - Should we provide a list of possible projects they could do, or keep it completely open-ended?
-- Should we distribute it as a forked git repo so that people can build off previous submissions?
+- Here's the tiniest possible mockup of our system
+- To use:
+  - "Run All" in `sim.ipynb` to produce a `data.js` file
+  - Open `index.html` in a browser and you should see a plot like the one below
+- Your task: 
+  - **Add to this in what ever way best shows off your unique skills + creativity!**
 
 
-----
+### Some Project Ideas
 
-![newplot](https://gitlab.sedaro.com/sedaro-satellite/common/-/wikis/uploads/1cb2595d3dd16c127d4ea865bf5d1f27/newplot.png)
+- Sim Bed:
+  - Improve the Q-Range KV Store data structure
+  - Make the system more generic/extensible
+  - Make it fast
+- Front End:
+  - Set up a framework like React
+  - Add cool visualizations
+  - Improve efficiency/caching
+- Data:
+  - Utilize a better persistence layer than a js file
+  - Do some statistical analysis on the data
+  - Set up background jobs to preprocess data
+- Mod Sim:
+  - Improve the numerical stability of the simulation functions
+  - Implement new components
+  - Analyze the sensitivity to initial conditions
+- Etc
+  - Port to a language of your choice
+  - Set up testing
+  - Containerize
+- Whatever you want; these are just suggestions to get you thinking
+
+![](./screenshot.png)
