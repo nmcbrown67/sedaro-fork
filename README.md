@@ -24,7 +24,7 @@ If you have any questions or issues while you work through this problem or if yo
 
 ## Your Task
 
-**Review the few files that make up Sedaro Nano, figure out how it works, and then add to it in what ever way <u>best</u> shows off your unique skills + creativity!**
+**Review the few files that make up Sedaro Nano, figure out how it works, and then add to it in whatever way <u>best</u> shows off your unique skills + creativity!**
 
 ### Some Project Ideas
 
