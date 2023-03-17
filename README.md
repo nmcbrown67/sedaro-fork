@@ -4,7 +4,7 @@ The tiniest possible mockup of our system
 
 ## Goal
 
-The goal of this mini-project is to gain a better understanding of your ability to be creative, think through problems, and solve relevant challenges related to the engineering roles at Sedaro. This is an opportunity for you to show off your personal strengths. Don't focus on the simple contributions and instead aim to really impress us. Get creative, the prompt is intentionally very open-ended.
+The goal of this mini-project is to gain a better understanding of your ability to **be creative**, **think through problems**, and **solve relevant challenges** related to the engineering roles at Sedaro. This is an opportunity for you to show off your personal strengths. Don't focus on the simple contributions and instead aim to really impress us. Get creative, the prompt is intentionally very open-ended.
 
 Within the next `7` days, attempt the following mini-project and return your solution containing the full project (less anything that would be .gitignored such as `node_modules`) and any notes on how to setup and run your specific solution. As important as your solution, we are interested in understanding your thought process and your ability to clearly communicate your approach so a writeup may also be included.
 
