@@ -35,7 +35,6 @@ If you have any questions or issues while you work through this problem or if yo
   - Make the system more generic/extensible
   - Make it fast
 - Front End:
-  - Set up a framework like React
   - Add cool visualizations and interactivity
   - Improve efficiency/caching
 - Data:
