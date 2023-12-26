@@ -5,7 +5,6 @@ FROM node:20-bookworm
 WORKDIR /sedaro-nano/
 
 # Copy all required files to the container
-# TODO: This is for running in a dev setup. For productionization, we'd want to do a `RUN npm run build` and move the outputted files.
 COPY public/ /sedaro-nano/public
 COPY src/ /sedaro-nano/src
 COPY package*.json /sedaro-nano/
@@ -30,7 +29,7 @@ RUN apt-get update && apt-get install -y \
   python3
 
 # Run the sim in order to output a data.json file.
-# TODO: ideally, this should sit on a flask server behind an API endpoint that allows it to be re-run at will
+# IDEA: Rearchitect this so we can run the simulation many times with different initial conditions, without rebuilding
 RUN python3 sim.py
 
 # Start the Node app
