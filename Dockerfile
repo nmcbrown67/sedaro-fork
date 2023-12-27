@@ -11,15 +11,6 @@ WORKDIR /app
 # Add app
 COPY ./app ./
 
-# # Set the working directory in the container
-# WORKDIR /sedaro-nano/
-
-# # Copy all required files to the container
-# COPY public/ /sedaro-nano/public
-# COPY src/ /sedaro-nano/src
-# COPY package*.json /sedaro-nano/
-# COPY sim.py /sedaro-nano/
-
 # Install project dependencies
 RUN npm install
 
