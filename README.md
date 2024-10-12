@@ -12,7 +12,7 @@ Please note that if you end up getting to a solution that you aren't happy with 
 
 If you have any questions or issues while you work through this problem or if you get stuck, please contact Bas Welsh at sebastian.welsh@sedarotech.com.
 
-Once you have completed your solution, please email to kacie.neurohr@sedarotech.com and sebastian.welsh@sedarotech.com
+Once you have completed your solution, please email to kacie.neurohr@sedarotech.com and sebastian.welsh@sedarotech.com.  If relevant to your solution, please include screenshots and/or a link to a video.
 
 ## Setup
 
