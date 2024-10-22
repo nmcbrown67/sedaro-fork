@@ -21,12 +21,13 @@ def health():
 def get_data():
 
     # If data.json doesn't exist, return empty data
-    if not os.path.exists("data.json"):
+    if not os.path.exists("./data.json"):
         data = []
 
     # Else return json from data.json
-    with open("./data.json") as f:
-        data = json.load(f)
+    else:
+        with open("./data.json") as f:
+            data = json.load(f)
 
     return data
 

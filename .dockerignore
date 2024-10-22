@@ -1,5 +1,9 @@
-.git
-./app/node_modules
-.dockerignore
-Dockerfile
-.venv
+**/node_modules
+**/data.json
+**/.DS_Store
+**/.venv
+**/__pycache__
+**/.vscode
+**/.git
+**/.dockerignore
+**/Dockerfile
