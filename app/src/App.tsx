@@ -45,15 +45,26 @@ const App = () => {
   }, []);
 
   return (
-    <Plot
-      style={{ position: 'fixed', width: '100%', height: '100%', left: 0, top: 0 }}
-      data={plotData}
-      layout={{
-        title: 'Visualization',
-        yaxis: { scaleanchor: 'x' },
-        autosize: true,
+    <div
+      style={{
+        height: '100vh',
+        width: '100vw',
       }}
-    />
+    >
+      <Plot
+        style={{ width: '100%', height: '100%' }}
+        data={plotData}
+        layout={{
+          yaxis: { scaleanchor: 'x' },
+          autosize: true,
+          dragmode: 'pan',
+        }}
+        useResizeHandler
+        config={{
+          scrollZoom: true,
+        }}
+      />
+    </div>
   );
 };
 
