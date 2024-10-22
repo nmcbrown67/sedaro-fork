@@ -22,8 +22,8 @@ const App = () => {
       console.log('calling fetchdata...');
 
       try {
-        // '/data' should be populated from a run of sim.py
-        const response = await fetch('http://localhost:8000/data');
+        // data should be populated from a POST call to the simulation server
+        const response = await fetch('http://localhost:8000/simulation');
         if (canceled) return;
         const data: DataPoint[] = await response.json();
         const updatedPlotData: PlottedFrame = {};
