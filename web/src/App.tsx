@@ -16,13 +16,15 @@ const App = () => {
 
   useEffect(() => {
     // fetch plot data when the component mounts
+    let canceled = false;
 
     async function fetchData() {
       console.log('calling fetchdata...');
 
       try {
-        // 'data.json' should be populated from a run of sim.py
-        const response = await fetch('data.json');
+        // '/data' should be populated from a run of sim.py
+        const response = await fetch('http://localhost:8000/data');
+        if (canceled) return;
         const data: DataPoint[] = await response.json();
         const updatedPlotData: PlottedFrame = {};
 
@@ -42,6 +44,10 @@ const App = () => {
     }
 
     fetchData();
+
+    return () => {
+      canceled = true;
+    };
   }, []);
 
   return (
