@@ -1,9 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Plot from 'react-plotly.js';
+
+// Input data from the simulation
+type AgentData = Record<string, number>;
+type DataFrame = Record<string, AgentData>;
+type DataPoint = [number, number, DataFrame];
+
+// Output data to the plot
+type PlottedAgentData = Record<string, number[]>;
+type PlottedFrame = Record<string, PlottedAgentData>;
 
 const App = () => {
   // Store plot data in state.
-  const [plotData, setPlotData] = useState([]);
+  const [plotData, setPlotData] = useState<PlottedAgentData[]>([]);
 
   useEffect(() => {
     // fetch plot data when the component mounts
@@ -14,8 +23,8 @@ const App = () => {
       try {
         // 'data.json' should be populated from a run of sim.py
         const response = await fetch('data.json');
-        const data = await response.json();
-        const updatedPlotData = {};
+        const data: DataPoint[] = await response.json();
+        const updatedPlotData: PlottedFrame = {};
 
         data.forEach(([t0, t1, frame]) => {
           for (let [agentId, { x, y }] of Object.entries(frame)) {
