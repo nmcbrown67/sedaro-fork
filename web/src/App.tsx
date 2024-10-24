@@ -1,5 +1,8 @@
+import { Flex, Heading, Separator, Table } from '@radix-ui/themes';
 import { useEffect, useState } from 'react';
 import Plot from 'react-plotly.js';
+import { Link } from 'react-router-dom';
+import { Routes } from 'routes';
 
 // Input data from the simulation
 type AgentData = Record<string, number>;
@@ -12,7 +15,9 @@ type PlottedFrame = Record<string, PlottedAgentData>;
 
 const App = () => {
   // Store plot data in state.
-  const [plotData, setPlotData] = useState<PlottedAgentData[]>([]);
+  const [positionData, setPositionData] = useState<PlottedAgentData[]>([]);
+  const [velocityData, setVelocityData] = useState<PlottedAgentData[]>([]);
+  const [initialState, setInitialState] = useState<DataFrame>({});
 
   useEffect(() => {
     // fetch plot data when the component mounts
@@ -26,18 +31,26 @@ const App = () => {
         const response = await fetch('http://localhost:8000/simulation');
         if (canceled) return;
         const data: DataPoint[] = await response.json();
-        const updatedPlotData: PlottedFrame = {};
+        const updatedPositionData: PlottedFrame = {};
+        const updatedVelocityData: PlottedFrame = {};
+
+        setInitialState(data[0][2]);
 
         data.forEach(([t0, t1, frame]) => {
-          for (let [agentId, { x, y }] of Object.entries(frame)) {
-            updatedPlotData[agentId] = updatedPlotData[agentId] || { x: [], y: [] };
-            updatedPlotData[agentId].x.push(x);
-            updatedPlotData[agentId].y.push(y);
+          for (let [agentId, { x, y, vx, vy }] of Object.entries(frame)) {
+            updatedPositionData[agentId] = updatedPositionData[agentId] || { x: [], y: [] };
+            updatedPositionData[agentId].x.push(x);
+            updatedPositionData[agentId].y.push(y);
+
+            updatedVelocityData[agentId] = updatedVelocityData[agentId] || { x: [], y: [] };
+            updatedVelocityData[agentId].x.push(vx);
+            updatedVelocityData[agentId].y.push(vy);
           }
         });
 
-        setPlotData(Object.values(updatedPlotData));
-        console.log('plotData:', Object.values(updatedPlotData));
+        setPositionData(Object.values(updatedPositionData));
+        setVelocityData(Object.values(updatedVelocityData));
+        console.log('Set plot data!');
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -55,21 +68,75 @@ const App = () => {
       style={{
         height: '100vh',
         width: '100vw',
+        margin: '0 auto',
       }}
     >
-      <Plot
-        style={{ width: '100%', height: '100%' }}
-        data={plotData}
-        layout={{
-          yaxis: { scaleanchor: 'x' },
-          autosize: true,
-          dragmode: 'pan',
-        }}
-        useResizeHandler
-        config={{
-          scrollZoom: true,
-        }}
-      />
+      <Flex direction='column' m='4' width='100%' justify='center' align='center'>
+        <Heading as='h1' size='8' weight='bold' mb='4'>
+          Simulation Data
+        </Heading>
+        <Link to={Routes.FORM}>Define new simulation parameters</Link>
+        <Separator size='4' my='5' />
+        <Flex direction='row' width='100%' justify='center'>
+          <Plot
+            style={{ width: '45%', height: '100%', margin: '5px' }}
+            data={positionData}
+            layout={{
+              title: 'Position',
+              yaxis: { scaleanchor: 'x' },
+              autosize: true,
+              dragmode: 'pan',
+            }}
+            useResizeHandler
+            config={{
+              scrollZoom: true,
+            }}
+          />
+          <Plot
+            style={{ width: '45%', height: '100%', margin: '5px' }}
+            data={velocityData}
+            layout={{
+              title: 'Velocity',
+              yaxis: { scaleanchor: 'x' },
+              autosize: true,
+              dragmode: 'pan',
+            }}
+            useResizeHandler
+            config={{
+              scrollZoom: true,
+            }}
+          />
+        </Flex>
+        <Flex justify='center' width='100%' m='4'>
+          <Table.Root
+            style={{
+              width: '800px',
+            }}
+          >
+            <Table.Header>
+              <Table.Row>
+                <Table.ColumnHeaderCell>Agent</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Initial Position (x,y)</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Initial Velocity (x,y)</Table.ColumnHeaderCell>
+              </Table.Row>
+            </Table.Header>
+
+            <Table.Body>
+              {Object.entries(initialState).map(([agentId, { x, y, vx, vy }]) => (
+                <Table.Row key={agentId}>
+                  <Table.RowHeaderCell>{agentId}</Table.RowHeaderCell>
+                  <Table.Cell>
+                    ({x}, {y})
+                  </Table.Cell>
+                  <Table.Cell>
+                    ({vx}, {vy})
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Root>
+        </Flex>
+      </Flex>
     </div>
   );
 };

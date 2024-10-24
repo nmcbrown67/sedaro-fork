@@ -3,7 +3,7 @@
 import json
 import os
 
-from flask import Flask
+from flask import Flask, request
 from flask_cors import CORS
 from simulator import Simulator
 from store import QRangeStore
@@ -34,17 +34,24 @@ def get_data():
 
 @app.post("/simulation")
 def simulate():
-    # TODO: Get data from request in this form
+    # Get data from request in this form
+    # init = {
+    #     "Planet": {"time": 0, "timeStep": 0.01, "x": 0, "y": 0.1, "vx": 0.1, "vy": 0},
+    #     "Satellite": {"time": 0, "timeStep": 0.01, "x": 0, "y": 1, "vx": 1, "vy": 0},
+    # }
+    init: dict = request.json
+    for key in init.keys():
+        init[key]["time"] = 0
+        init[key]["timeStep"] = 0.01
 
-    init = {
-        "Planet": {"time": 0, "timeStep": 0.01, "x": 0, "y": 0.1, "vx": 0.1, "vy": 0},
-        "Satellite": {"time": 0, "timeStep": 0.01, "x": 0, "y": 1, "vx": 1, "vy": 0},
-    }
+    # Create store and simulator
     store = QRangeStore()
-
     simulator = Simulator(store=store, init=init)
+
+    # Run simulation
     simulator.simulate()
 
+    # Save data to data.json
     with open("./data.json", "w") as f:
         f.write(json.dumps(store.store, indent=4))
 
