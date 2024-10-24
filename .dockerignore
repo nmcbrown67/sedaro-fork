@@ -4,6 +4,8 @@
 **/.venv
 **/__pycache__
 **/.vscode
+**/instance
+**/database.db
 **/.git
 **/.dockerignore
 **/Dockerfile
