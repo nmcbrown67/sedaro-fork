@@ -36,9 +36,11 @@ def get_data():
 def simulate():
     # Get data from request in this form
     # init = {
-    #     "Planet": {"time": 0, "timeStep": 0.01, "x": 0, "y": 0.1, "vx": 0.1, "vy": 0},
-    #     "Satellite": {"time": 0, "timeStep": 0.01, "x": 0, "y": 1, "vx": 1, "vy": 0},
+    #     "Planet": {"x": 0, "y": 0.1, "vx": 0.1, "vy": 0},
+    #     "Satellite": {"x": 0, "y": 1, "vx": 1, "vy": 0},
     # }
+
+    # Define time and timeStep for each object
     init: dict = request.json
     for key in init.keys():
         init[key]["time"] = 0

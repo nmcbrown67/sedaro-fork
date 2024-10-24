@@ -71,6 +71,7 @@ const App = () => {
         margin: '0 auto',
       }}
     >
+      {/* Flex: https://www.radix-ui.com/themes/docs/components/flex */}
       <Flex direction='column' m='4' width='100%' justify='center' align='center'>
         <Heading as='h1' size='8' weight='bold' mb='4'>
           Simulation Data
@@ -113,6 +114,7 @@ const App = () => {
               width: '800px',
             }}
           >
+            {/* Table: https://www.radix-ui.com/themes/docs/components/table */}
             <Table.Header>
               <Table.Row>
                 <Table.ColumnHeaderCell>Agent</Table.ColumnHeaderCell>
