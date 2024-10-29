@@ -38,7 +38,10 @@ class QRangeStore:
         self.store = []
 
     def __setitem__(self, rng, value):
-        (low, high) = rng
+        try:
+            (low, high) = rng
+        except (TypeError, ValueError):
+            raise IndexError("Invalid Range: must provide a low and high value.")
         if not low < high:
             raise IndexError("Invalid Range.")
         self.store.append((low, high, value))
@@ -47,7 +50,7 @@ class QRangeStore:
         ret = [v for (l, h, v) in self.store if l <= key < h]
         if not ret:
             raise IndexError("Not found.")
-        return ret
+        return sorted(ret, key=lambda x: x[0])
 
 
 doctest.testmod()
