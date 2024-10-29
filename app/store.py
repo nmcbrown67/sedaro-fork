@@ -50,7 +50,7 @@ class QRangeStore:
         ret = [v for (l, h, v) in self.store if l <= key < h]
         if not ret:
             raise IndexError("Not found.")
-        return sorted(ret, key=lambda x: x[0])
+        return ret
 
 
 doctest.testmod()
