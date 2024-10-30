@@ -31,11 +31,11 @@ Once you have completed your solution, please follow the submission steps below.
 1. Remove any temporary or .gitignored files/directories, such as `__pycache__`, `node_modules`, or any local virtual environments.
 2. Include a writeup as detailed in the **Goal** section above. If relevant to your solution, please include screenshots and/or a link to a video.
 3. Compress your entire `sedaro_nano` directory into a `.zip` file.
-4. Email your solution to kacie.neurohr@sedarotech.com and sebastian.welsh@sedarotech.com.
+4. Email your solution to kacie.neurohr@sedarotech.com and sebastian.welsh@sedarotech.com.  Our mail server will often block submissions so we recommend sharing the .zip with us via a Google Drive link (or similar sharing service).
 
 ## Your Task
 
-Included in this directory is a tiny mockup of Sedaro's system. Though it technically comprises a full-stack app, there are _many_ areas in which it could improve.
+Included in this directory is a tiny mockup of Sedaro's system. Though it technically comprises a full-stack app, there are _many_ areas in which it could be improved.
 
 **Review the files that make up Sedaro Nano, figure out how it works, and then add to it in whatever ways <u>best</u> show off your unique skills + creativity!**
 
@@ -61,7 +61,6 @@ Included in this directory is a tiny mockup of Sedaro's system. Though it techni
   - Implement additional modeling and simulation scope
   - Analyze the sensitivity to initial conditions
 - Etc:
-  - Port to a language of your choice
   - Incorporate computational optimizations (e.g. linear programming)
 - Whatever you want; these are just suggestions to get you thinking
 
