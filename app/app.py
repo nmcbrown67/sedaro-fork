@@ -55,8 +55,8 @@ def get_data():
 def simulate():
     # Get data from request in this form
     # init = {
-    #     "Planet": {"x": 0, "y": 0.1, "vx": 0.1, "vy": 0},
-    #     "Satellite": {"x": 0, "y": 1, "vx": 1, "vy": 0},
+    #     "Body1": {"x": 0, "y": 0.1, "vx": 0.1, "vy": 0},
+    #     "Body2": {"x": 0, "y": 1, "vx": 1, "vy": 0},
     # }
 
     # Define time and timeStep for each agent
