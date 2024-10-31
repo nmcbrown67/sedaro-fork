@@ -36,20 +36,31 @@ const App = () => {
 
         setInitialState(data[0][2]);
 
+        const baseData = {
+          x: [],
+          y: [],
+          z: [],
+          type: 'scatter3d',
+          mode: 'lines+markers',
+          marker: { size: 4 },
+          line: { width: 2 },
+        };
+
         data.forEach(([t0, t1, frame]) => {
           for (let [agentId, { x, y, z, vx, vy, vz }] of Object.entries(frame)) {
-            updatedPositionData[agentId] = updatedPositionData[agentId] || { x: [], y: [], z: [] };
+            updatedPositionData[agentId] =
+              updatedPositionData[agentId] || JSON.parse(JSON.stringify(baseData));
             updatedPositionData[agentId].x.push(x);
             updatedPositionData[agentId].y.push(y);
             updatedPositionData[agentId].z.push(z);
 
-            updatedVelocityData[agentId] = updatedVelocityData[agentId] || { x: [], y: [], z: [] };
+            updatedVelocityData[agentId] =
+              updatedVelocityData[agentId] || JSON.parse(JSON.stringify(baseData));
             updatedVelocityData[agentId].x.push(vx);
             updatedVelocityData[agentId].y.push(vy);
             updatedVelocityData[agentId].z.push(vz);
           }
         });
-
         setPositionData(Object.values(updatedPositionData));
         setVelocityData(Object.values(updatedVelocityData));
         console.log('Set plot data!');
@@ -83,15 +94,7 @@ const App = () => {
         <Flex direction="row" width="100%" justify="center">
           <Plot
             style={{ width: '45%', height: '100%', margin: '5px' }}
-            data={positionData.map((agentData) => ({
-              x: agentData.x,
-              y: agentData.y,
-              z: agentData.z,
-              type: 'scatter3d',
-              mode: 'lines+markers',
-              marker: { size: 4 },
-              line: { width: 2 },
-            }))}
+            data={positionData}
             layout={{
               title: 'Position',
               scene: {
@@ -109,15 +112,7 @@ const App = () => {
           />
           <Plot
             style={{ width: '45%', height: '100%', margin: '5px' }}
-            data={velocityData.map((agentData) => ({
-              x: agentData.x,
-              y: agentData.y,
-              z: agentData.z,
-              type: 'scatter3d',
-              mode: 'lines+markers',
-              marker: { size: 4 },
-              line: { width: 2 },
-            }))}
+            data={velocityData}
             layout={{
               title: 'Velocity',
               scene: {
