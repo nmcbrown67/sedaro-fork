@@ -31,7 +31,7 @@ const SimulateForm: React.FC = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState<FormData>({
-    Body1: { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, mass: 1 },
+    Body1: { x: -0.73, y: 0, z: 0, vx: 0, vy: -0.0015, vz: 0, mass: 1 },
     Body2: { x: 60.34, y: 0, z: 0, vx: 0, vy: 0.13, vz: 0, mass: 0.0123 },
   });
 
