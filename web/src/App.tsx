@@ -36,7 +36,7 @@ const App = () => {
 
         setInitialState(data[0][2]);
 
-        const baseData = {
+        const baseData = () => ({
           x: [],
           y: [],
           z: [],
@@ -44,18 +44,16 @@ const App = () => {
           mode: 'lines+markers',
           marker: { size: 4 },
           line: { width: 2 },
-        };
+        });
 
         data.forEach(([t0, t1, frame]) => {
           for (let [agentId, { x, y, z, vx, vy, vz }] of Object.entries(frame)) {
-            updatedPositionData[agentId] =
-              updatedPositionData[agentId] || JSON.parse(JSON.stringify(baseData));
+            updatedPositionData[agentId] = updatedPositionData[agentId] || baseData();
             updatedPositionData[agentId].x.push(x);
             updatedPositionData[agentId].y.push(y);
             updatedPositionData[agentId].z.push(z);
 
-            updatedVelocityData[agentId] =
-              updatedVelocityData[agentId] || JSON.parse(JSON.stringify(baseData));
+            updatedVelocityData[agentId] = updatedVelocityData[agentId] || baseData();
             updatedVelocityData[agentId].x.push(vx);
             updatedVelocityData[agentId].y.push(vy);
             updatedVelocityData[agentId].z.push(vz);
