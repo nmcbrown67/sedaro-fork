@@ -5,14 +5,14 @@ from random import random
 import numpy as np
 
 
-def propagate(agentId, universe):
+def propagate(agent_id, universe):
     """Propagate agentId from `time` to `time + timeStep`."""
     # Get simulation state
-    self_state = universe[agentId]
+    self_state = universe[agent_id]
     time = self_state["time"]
-    timeStep = self_state["timeStep"]
+    time_step = self_state["timeStep"]
 
-    if agentId == 'Body1':
+    if agent_id == 'Body1':
         other_body = 'Body2'
     else:
         other_body = 'Body1'
@@ -24,12 +24,12 @@ def propagate(agentId, universe):
     r_other = np.array([other_state['x'], other_state['y'], other_state['z']])
     m_other = other_state['mass']
     r = r_self - r_other
-    dv = -m_other * r / np.linalg.norm(r)**3
-    v_self = v_self + dv * timeStep
-    r_self = r_self + v_self * timeStep
+    dvdt = -m_other * r / np.linalg.norm(r)**3
+    v_self = v_self + dvdt * time_step
+    r_self = r_self + v_self * time_step
 
     return {
-        "time": time + timeStep,
+        "time": time + time_step,
         "timeStep": 5. + random() * 9.,
         "mass": self_state["mass"],
         "x": r_self[0],
