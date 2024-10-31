@@ -17,7 +17,7 @@ class Base(DeclarativeBase):
 ############################## Application Configuration ##############################
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:5001"])
+CORS(app, origins=["http://localhost:5000"])
 
 db = SQLAlchemy(model_class=Base)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"

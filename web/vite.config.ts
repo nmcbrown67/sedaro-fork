@@ -9,6 +9,6 @@ export default defineConfig({
   plugins: [viteReact(), viteTsconfigPaths(), viteSvgr()],
   server: {
     host: true,
-    port: 5001,
+    port: 5000,
   },
 });
