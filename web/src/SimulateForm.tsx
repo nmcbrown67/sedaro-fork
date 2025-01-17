@@ -8,21 +8,29 @@ import { Routes } from 'routes';
 type FormValue = number | '';
 interface FormData {
   Body1: {
-    x: FormValue;
-    y: FormValue;
-    z: FormValue;
-    vx: FormValue;
-    vy: FormValue;
-    vz: FormValue;
+    position: {
+      x: FormValue;
+      y: FormValue;
+      z: FormValue;
+    }
+    velocity: {
+      x: FormValue;
+      y: FormValue;
+      z: FormValue;
+    }
     mass: FormValue;
   };
   Body2: {
-    x: FormValue;
-    y: FormValue;
-    z: FormValue;
-    vx: FormValue;
-    vy: FormValue;
-    vz: FormValue;
+    position: {
+      x: FormValue;
+      y: FormValue;
+      z: FormValue;
+    }
+    velocity: {
+      x: FormValue;
+      y: FormValue;
+      z: FormValue;
+    }
     mass: FormValue;
   };
 }
@@ -31,8 +39,8 @@ const SimulateForm: React.FC = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState<FormData>({
-    Body1: { x: -0.73, y: 0, z: 0, vx: 0, vy: -0.0015, vz: 0, mass: 1 },
-    Body2: { x: 60.34, y: 0, z: 0, vx: 0, vy: 0.13, vz: 0, mass: 0.0123 },
+    Body1: { position: {x: -0.73, y: 0, z: 0}, velocity: {x: 0, y: -0.0015, z: 0}, mass: 1 },
+    Body2: { position: {x: 60.34, y: 0, z: 0}, velocity: {x: 0, y: 0.13, z: 0}, mass: 0.0123 },
   });
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,7 +58,7 @@ const SimulateForm: React.FC = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({main: formData}),
         });
         if (!response.ok) {
           throw new Error('Network response was not ok');
@@ -93,68 +101,68 @@ const SimulateForm: React.FC = () => {
             Body1
           </Heading>
           {/* Form: https://www.radix-ui.com/primitives/docs/components/form */}
-          <FormField name="Body1.x">
-            <FormLabel htmlFor="Body1.x">Initial X-position</FormLabel>
+          <FormField name="Body1.position.x">
+            <FormLabel htmlFor="Body1.position.x">Initial X-position</FormLabel>
             <TextField.Root
               type="number"
-              id="Body1.x"
-              name="Body1.x"
-              value={formData.Body1.x}
+              id="Body1.position.x"
+              name="Body1.position.x"
+              value={formData.Body1.position.x}
               onChange={handleChange}
               required
             />
           </FormField>
-          <FormField name="Body1.y">
-            <FormLabel htmlFor="Body1.y">Initial Y-position</FormLabel>
+          <FormField name="Body1.position.y">
+            <FormLabel htmlFor="Body1.position.y">Initial Y-position</FormLabel>
             <TextField.Root
               type="number"
-              id="Body1.y"
-              name="Body1.y"
-              value={formData.Body1.y}
+              id="Body1.position.y"
+              name="Body1.position.y"
+              value={formData.Body1.position.y}
               onChange={handleChange}
               required
             />
           </FormField>
-          <FormField name="Body1.z">
-            <FormLabel htmlFor="Body1.z">Initial Z-position</FormLabel>
+          <FormField name="Body1.position.z">
+            <FormLabel htmlFor="Body1.position.z">Initial Z-position</FormLabel>
             <TextField.Root
               type="number"
-              id="Body1.z"
-              name="Body1.z"
-              value={formData.Body1.z}
+              id="Body1.position.z"
+              name="Body1.position.z"
+              value={formData.Body1.position.z}
               onChange={handleChange}
               required
             />
           </FormField>
-          <FormField name="Body1.vx">
-            <FormLabel htmlFor="Body1.vx">Initial X-velocity</FormLabel>
+          <FormField name="Body1.velocity.x">
+            <FormLabel htmlFor="Body1.velocity.x">Initial X-velocity</FormLabel>
             <TextField.Root
               type="number"
-              id="Body1.vx"
-              name="Body1.vx"
-              value={formData.Body1.vx}
+              id="Body1.velocity.x"
+              name="Body1.velocity.x"
+              value={formData.Body1.velocity.x}
               onChange={handleChange}
               required
             />
           </FormField>
-          <FormField name="Body1.vy">
-            <FormLabel htmlFor="Body1.vy">Initial Y-velocity</FormLabel>
+          <FormField name="Body1.velocity.y">
+            <FormLabel htmlFor="Body1.velocity.y">Initial Y-velocity</FormLabel>
             <TextField.Root
               type="number"
-              id="Body1.vy"
-              name="Body1.vy"
-              value={formData.Body1.vy}
+              id="Body1.velocity.y"
+              name="Body1.velocity.y"
+              value={formData.Body1.velocity.y}
               onChange={handleChange}
               required
             />
           </FormField>
-          <FormField name="Body1.vz">
-            <FormLabel htmlFor="Body1.vz">Initial Z-velocity</FormLabel>
+          <FormField name="Body1.velocity.z">
+            <FormLabel htmlFor="Body1.velocity.z">Initial Z-velocity</FormLabel>
             <TextField.Root
               type="number"
-              id="Body1"
-              name="Body1"
-              value={formData.Body1.vz}
+              id="Body1.velocity.z"
+              name="Body1.velocity.z"
+              value={formData.Body1.velocity.z}
               onChange={handleChange}
               required
             />
@@ -178,68 +186,68 @@ const SimulateForm: React.FC = () => {
           <Heading as="h3" size="3" weight="bold" mt="4">
             Body2
           </Heading>
-          <FormField name="Body2.x">
-            <FormLabel htmlFor="Body2.x">Initial X-position</FormLabel>
+          <FormField name="Body2.position.x">
+            <FormLabel htmlFor="Body2.position.x">Initial X-position</FormLabel>
             <TextField.Root
               type="number"
-              id="Body2.x"
-              name="Body2.x"
-              value={formData.Body2.x}
+              id="Body2.position.x"
+              name="Body2.position.x"
+              value={formData.Body2.position.x}
               onChange={handleChange}
               required
             />
           </FormField>
-          <FormField name="Body2.y">
-            <FormLabel htmlFor="Body2.y">Initial Y-position</FormLabel>
+          <FormField name="Body2.position.y">
+            <FormLabel htmlFor="Body2.position.y">Initial Y-position</FormLabel>
             <TextField.Root
               type="number"
-              id="Body2.y"
-              name="Body2.y"
-              value={formData.Body2.y}
+              id="Body2.position.y"
+              name="Body2.position.y"
+              value={formData.Body2.position.y}
               onChange={handleChange}
               required
             />
           </FormField>
-          <FormField name="Body2.z">
-            <FormLabel htmlFor="Body2.z">Initial Z-position</FormLabel>
+          <FormField name="Body2.position.z">
+            <FormLabel htmlFor="Body2.position.z">Initial Z-position</FormLabel>
             <TextField.Root
               type="number"
-              id="Body2.z"
-              name="Body2.z"
-              value={formData.Body2.z}
+              id="Body2.position.z"
+              name="Body2.position.z"
+              value={formData.Body2.position.z}
               onChange={handleChange}
               required
             />
           </FormField>
-          <FormField name="Body2.vx">
-            <FormLabel htmlFor="Body2.vx">Initial X-velocity</FormLabel>
+          <FormField name="Body2.velocity.x">
+            <FormLabel htmlFor="Body2.velocity.x">Initial X-velocity</FormLabel>
             <TextField.Root
               type="number"
-              id="Body2.vx"
-              name="Body2.vx"
-              value={formData.Body2.vx}
+              id="Body2.velocity.x"
+              name="Body2.velocity.x"
+              value={formData.Body2.velocity.x}
               onChange={handleChange}
               required
             />
           </FormField>
-          <FormField name="Body2.vy">
-            <FormLabel htmlFor="Body2.vy">Initial Y-velocity</FormLabel>
+          <FormField name="Body2.velocity.y">
+            <FormLabel htmlFor="Body2.velocity.y">Initial Y-velocity</FormLabel>
             <TextField.Root
               type="number"
-              id="Body2.vy"
-              name="Body2.vy"
-              value={formData.Body2.vy}
+              id="Body2.velocity.y"
+              name="Body2.velocity.y"
+              value={formData.Body2.velocity.y}
               onChange={handleChange}
               required
             />
           </FormField>
-          <FormField name="Body2.vz">
-            <FormLabel htmlFor="Body2.vz">Initial Z-velocity</FormLabel>
+          <FormField name="Body2.velocity.z">
+            <FormLabel htmlFor="Body2.velocity.z">Initial Z-velocity</FormLabel>
             <TextField.Root
               type="number"
-              id="Body2.vz"
-              name="Body2.vz"
-              value={formData.Body2.vz}
+              id="Body2.velocity.z"
+              name="Body2.velocity.z"
+              value={formData.Body2.velocity.z}
               onChange={handleChange}
               required
             />
