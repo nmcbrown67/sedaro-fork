@@ -31,7 +31,7 @@ Once you have completed your solution, please follow the submission steps below.
 1. Remove any temporary or .gitignored files/directories, such as `__pycache__`, `node_modules`, or any local virtual environments.
 2. Include a writeup as detailed in the **Goal** section above. If relevant to your solution, please include screenshots and/or a link to a video.
 3. Compress your entire `sedaro_nano` directory into a `.zip` file.
-4. Email your solution to kacie.neurohr@sedarotech.com and sebastian.welsh@sedarotech.com.  Our mail server will often block submissions so we recommend sharing the .zip with us via a Google Drive link (or similar sharing service).
+4. Email your solution to kacie.neurohr@sedaro.com and the other email(s) listed in the original instructions. Our mail server will often block submissions so we recommend sharing the .zip with us via a Google Drive link (or similar sharing service).
 
 ## Your Task
 
