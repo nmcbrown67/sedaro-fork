@@ -4,8 +4,9 @@ from random import random
 
 import numpy as np
 
+
 def propagate_velocity(time_step, position, velocity, other_position, m_other):
-    """Propagate agent from `time` to `time + timeStep`."""
+    """Propagete the velocity of the agent from `time` to `time + timeStep`."""
     # Use law of gravitation to update velocity
     r_self = np.array([position['x'], position['y'], position['z']])
     v_self = np.array([velocity['x'], velocity['y'], velocity['z']])
@@ -18,7 +19,7 @@ def propagate_velocity(time_step, position, velocity, other_position, m_other):
     return {'x': v_self[0], 'y': v_self[1], 'z': v_self[2]}
 
 def propagate_position(time_step, position, velocity):
-    """Propagate agent from `time` to `time + timeStep`."""
+    """Propagate the position of the agent from `time` to `time + timeStep`."""
     # Apply velocity to position
     r_self = np.array([position['x'], position['y'], position['z']])
     v_self = np.array([velocity['x'], velocity['y'], velocity['z']])
@@ -34,12 +35,23 @@ def identity(arg):
     return arg
 
 def timestep_manager(velocity):
-    """Compute the length of the next simulation timestep"""
+    """Compute the length of the next simulation timestep for the agent"""
     return 100
 
 def time_manager(time, timeStep):
-    """Compute the time for the next simulation step"""
+    """Compute the time for the next simulation step for the agent"""
     return time + timeStep
+
+'''
+Declare what agents should exist, and bind the consumed argements and produced results to each other.
+
+Query syntax:
+- `<variableName>` will do a dictionary lookup of `variableName` in the current state of the agent
+   the query is running for.
+- prev!(<query>)` will get the value of `query` from the previous frame.
+- `agent!(<agentId>)` will get the last state produced by `agentId`.
+- `<query>.<name>` will evaluate `query` and then look up `name` in the resulting dictionary.
+'''
 
 agents = {
     'Body1': [
