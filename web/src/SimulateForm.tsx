@@ -58,7 +58,7 @@ const SimulateForm: React.FC = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({main: formData}),
+          body: JSON.stringify(formData),
         });
         if (!response.ok) {
           throw new Error('Network response was not ok');

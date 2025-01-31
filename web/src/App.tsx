@@ -6,8 +6,7 @@ import { Routes } from 'routes';
 
 // Input data from the simulation
 type AgentData = Record<string, Record<string, number>>;
-type EngineData = Record<string, AgentData>;
-type DataFrame = Record<string, EngineData>;
+type DataFrame = Record<string, AgentData>;
 type DataPoint = [number, number, DataFrame];
 
 // Output data to the plot
@@ -48,8 +47,7 @@ const App = () => {
         });
 
         data.forEach(([t0, t1, frame]) => {
-          for (let [engineId, engine] of Object.entries(frame)) {
-            for (let [agentId, val] of Object.entries(engine)) {
+          for (let [agentId, val] of Object.entries(frame)) {
               if (agentId == "time" || agentId == "timeStep") {
                 continue;
               }
@@ -63,7 +61,6 @@ const App = () => {
               updatedVelocityData[agentId].x.push(velocity.x);
               updatedVelocityData[agentId].y.push(velocity.y);
               updatedVelocityData[agentId].z.push(velocity.z);
-            }
           }
         });
         setPositionData(Object.values(updatedPositionData));
@@ -145,13 +142,12 @@ const App = () => {
               <Table.Row>
                 <Table.ColumnHeaderCell>Agent</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>Initial Position (x,y, z)</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Initial Velocity (x,y)</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Initial Velocity (x,y,z)</Table.ColumnHeaderCell>
               </Table.Row>
             </Table.Header>
 
             <Table.Body>
               {Object.entries(initialState).flatMap(
-                  ([engine, agents]) => Object.entries(agents).map(
                   ([agentId, { position, velocity }]) => {
                     if (position) {
                     return (
@@ -168,7 +164,7 @@ const App = () => {
                     return null;
                   }
                 }
-              ))}
+              )}
             </Table.Body>
           </Table.Root>
         </Flex>

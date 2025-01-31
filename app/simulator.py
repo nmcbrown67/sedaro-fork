@@ -5,7 +5,7 @@ from operator import __or__
 import subprocess
 import json
 
-from modsim import engines
+from modsim import agents
 from store import QRangeStore
 
 def parse_query(query):
@@ -41,19 +41,16 @@ class Simulator:
         self.store = store
         store[-999999999, 0] = init
         self.init = init
-        self.times = {engineId: state["time"] for engineId, state in init.items()}
+        self.times = {agentId: state["time"] for agentId, state in init.items()}
         self.sim_graph = {}
-        for engine in engines:
-            engine_graph = {}
-            for agentId, sms in engine["agents"].items():
-                agent = []
-                for sm in sms:
-                    consumed = parse_query(sm["consumed"])["content"]
-                    produced = parse_query(sm["produced"])
-                    func = sm["function"]
-                    agent.append({"func": func, "consumed": consumed, "produced": produced})
-                engine_graph[agentId] = agent
-            self.sim_graph[engine["name"]] = engine_graph
+        for (agentId, sms) in agents.items():
+            agent = []
+            for sm in sms:
+                consumed = parse_query(sm["consumed"])["content"]
+                produced = parse_query(sm["produced"])
+                func = sm["function"]
+                agent.append({"func": func, "consumed": consumed, "produced": produced})
+            self.sim_graph[agentId] = agent
 
     def read(self, t):
         try:
@@ -62,58 +59,57 @@ class Simulator:
             data = []
         return reduce(__or__, data, {}) # combine all data into one dictionary
 
-    def step(self, engineId, universe):
+    def step(self, agentId, universe):
         state = dict()
         sms = []
-        for (agentId, agent) in self.sim_graph[engineId].items():
-            for sm in agent:
-                sms.append((agentId, sm))
+        for sm in self.sim_graph[agentId]:
+            sms.append((agentId, sm))
         while sms:
             next_sms = []
             for (agentId, sm) in sms:
-                if self.run_sm(engineId, agentId, sm, universe, state) is None:
+                if self.run_sm(agentId, sm, universe, state) is None:
                     next_sms.append((agentId, sm))
             sms = next_sms
         return state
 
-    def run_sm(self, engineId, agentId, sm, universe, newState):
+    def run_sm(self, agentId, sm, universe, newState):
         inputs = []
         for q in sm["consumed"]:
-            found = self.find(engineId, agentId, q, universe, newState)
+            found = self.find(agentId, q, universe, newState)
             if found is None:
                 return None
             inputs.append(found)
         res = sm["func"](*inputs)
-        self.put(engineId, agentId, sm["produced"], universe, newState, res)
+        self.put(agentId, sm["produced"], universe, newState, res)
         return res
 
-    def find(self, engineId, agentId, query, universe, newState: dict, prev=False):
+    def find(self, agentId, query, universe, newState: dict, prev=False):
         match query["kind"]:
             case "Base":
                 if prev:
-                    return universe[engineId][agentId][query["content"]]
+                    return universe[agentId][query["content"]]
                 agentState = newState.get(agentId)
                 if agentState is None:
                     return None
                 return agentState.get(query["content"])
             case "Prev":
-                return self.find(engineId, agentId, query["content"], universe, newState, prev=True)
+                return self.find(agentId, query["content"], universe, newState, prev=True)
             case "Root":
                 if prev:
-                    return universe[engineId]
+                    return universe[agentId]
                 return newState
             case "Agent":
                 # agent always gets the previous state
-                return universe[engineId][query["content"]]
+                return universe[query["content"]]
             case "Access":
-                base = self.find(engineId, agentId, query["content"]["base"], universe, newState, prev)
+                base = self.find(agentId, query["content"]["base"], universe, newState, prev)
                 if base is None:
                     return None
                 return base.get(query["content"]["field"])
             case "Tuple":
                 res = []
                 for q in query["content"]:
-                    found = self.find(engineId, agentId, q, universe, newState, prev)
+                    found = self.find(agentId, q, universe, newState, prev)
                     if found is None:
                         return None
                     res.append(found)
@@ -121,7 +117,7 @@ class Simulator:
             case _:
                 return None
 
-    def put(self, engineId, agentId, query, universe, newState: dict, data):
+    def put(self, agentId, query, universe, newState: dict, data):
         match query["kind"]:
             case "Base":
                 agentState = newState.get(agentId)
@@ -134,27 +130,27 @@ class Simulator:
             case "Root":
                 pass
             case "Agent":
-                res = universe[engineId][query["content"]]
+                res = universe[query["content"]]
                 if res is None:
                     res = {}
-                    universe[engineId][query["content"]] = res
+                    universe[query["content"]] = res
                 return res
             case "Access":
                 baseQuery = query["content"]["base"]
-                base = self.find(engineId, agentId, baseQuery, universe, newState)
+                base = self.find(agentId, baseQuery, universe, newState)
                 if base is None:
                     base = {}
-                    self.put(engineId, agentId, baseQuery, universe, newState, base)
+                    self.put(agentId, baseQuery, universe, newState, base)
                 base[query["content"]["field"]] = data
             case "Tuple":
                 raise Exception(f"Cannot produce tuple")
 
     def simulate(self, iterations: int = 500):
         for _ in range(iterations):
-            for engineId in self.init:
-                t = self.times[engineId]
+            for agentId in self.init:
+                t = self.times[agentId]
                 universe = self.read(t - 0.001)
                 if set(universe) == set(self.init):
-                    newState = self.step(engineId, universe)
-                    self.store[t, newState["time"]] = {engineId: newState}
-                    self.times[engineId] = newState["time"]
+                    newState = self.step(agentId, universe)
+                    self.store[t, newState[agentId]["time"]] = newState
+                    self.times[agentId] = newState[agentId]["time"]

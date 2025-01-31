@@ -4,7 +4,7 @@ from random import random
 
 import numpy as np
 
-def propagate_velocity(time_step, position, velocity, mass, other_position, m_other):
+def propagate_velocity(time_step, position, velocity, other_position, m_other):
     """Propagate agent from `time` to `time + timeStep`."""
     # Use law of gravitation to update velocity
     r_self = np.array([position['x'], position['y'], position['z']])
@@ -33,7 +33,7 @@ def propagate_mass(mass):
 def identity(arg):
     return arg
 
-def timestep_manager(velocity1, velocity2):
+def timestep_manager(velocity):
     """Compute the length of the next simulation timestep"""
     return 100
 
@@ -41,103 +41,110 @@ def time_manager(time, timeStep):
     """Compute the time for the next simulation step"""
     return time + timeStep
 
-engines = [
-    {
-        'name': 'main',
-        'agents': {
-            'Body1': [
-                {
-                    'consumed': '''(
-                        prev!(root!.timeStep),
-                        prev!(position),
-                        prev!(velocity),
-                        prev!(mass),
-                        agent!(Body2).position,
-                        agent!(Body2).mass,
-                    )''',
-                    'produced': '''velocity''',
-                    'function': propagate_velocity,
-                },
-                {
-                    'consumed': '''(
-                        prev!(root!.timeStep),
-                        prev!(position),
-                        velocity,
-                    )''',
-                    'produced': '''position''',
-                    'function': propagate_position,
-                },
-                {
-                    'consumed': '''(
-                        prev!(mass),
-                    )''',
-                    'produced': '''mass''',
-                    'function': propagate_mass,
-                },
-                {
-                    'consumed': '''(
-                        prev!(root!.time),
-                        root!.timeStep
-                    )''',
-                    'produced': '''root!.time''',
-                    'function': time_manager,
-                },
-                {
-                    'consumed': '''(
-                        velocity,
-                        agent!(Body2).velocity,
-                    )''',
-                    'produced': '''root!.timeStep''',
-                    'function': timestep_manager,
-                }
-            ],
-            'Body2': [
-                {
-                    'consumed': '''(
-                        prev!(root!.timeStep),
-                        prev!(position),
-                        prev!(velocity),
-                        prev!(mass),
-                        agent!(Body1).position,
-                        agent!(Body1).mass,
-                    )''',
-                    'produced': '''velocity''',
-                    'function': propagate_velocity,
-                },
-                {
-                    'consumed': '''(
-                        prev!(root!.timeStep),
-                        prev!(position),
-                        velocity,
-                    )''',
-                    'produced': '''position''',
-                    'function': propagate_position,
-                },
-                {
-                    'consumed': '''(
-                        prev!(mass),
-                    )''',
-                    'produced': '''mass''',
-                    'function': propagate_mass,
-                }
-            ]
+agents = {
+    'Body1': [
+        {
+            'consumed': '''(
+                prev!(timeStep),
+                prev!(position),
+                prev!(velocity),
+                agent!(Body2).position,
+                agent!(Body2).mass,
+            )''',
+            'produced': '''velocity''',
+            'function': propagate_velocity,
         },
-    }
-]
+        {
+            'consumed': '''(
+                prev!(timeStep),
+                prev!(position),
+                velocity,
+            )''',
+            'produced': '''position''',
+            'function': propagate_position,
+        },
+        {
+            'consumed': '''(
+                prev!(mass),
+            )''',
+            'produced': '''mass''',
+            'function': propagate_mass,
+        },
+        {
+            'consumed': '''(
+                prev!(time),
+                timeStep
+            )''',
+            'produced': '''time''',
+            'function': time_manager,
+        },
+        {
+            'consumed': '''(
+                velocity,
+            )''',
+            'produced': '''timeStep''',
+            'function': timestep_manager,
+        }
+    ],
+    'Body2': [
+        {
+            'consumed': '''(
+                prev!(timeStep),
+                prev!(position),
+                prev!(velocity),
+                agent!(Body1).position,
+                agent!(Body1).mass,
+            )''',
+            'produced': '''velocity''',
+            'function': propagate_velocity,
+        },
+        {
+            'consumed': '''(
+                prev!(timeStep),
+                prev!(position),
+                velocity,
+            )''',
+            'produced': '''position''',
+            'function': propagate_position,
+        },
+        {
+            'consumed': '''(
+                prev!(mass),
+            )''',
+            'produced': '''mass''',
+            'function': propagate_mass,
+        },
+        {
+            'consumed': '''(
+                prev!(time),
+                timeStep
+            )''',
+            'produced': '''time''',
+            'function': time_manager,
+        },
+        {
+            'consumed': '''(
+                velocity,
+            )''',
+            'produced': '''timeStep''',
+            'function': timestep_manager,
+        }
+    ]
+}
 
 data = {
-    'main': {
+    'Body1': {
         'timeStep': 0.01,
         'time': 0.0,
-        'Body1': {
-            'position': {'x': -0.73, 'y': 0, 'z': 0},
-            'velocity': {'x': 0, 'y': -0.0015, 'z': 0},
-            'mass': 1
-        },
-        'Body2': {
-            'position': {'x': 60.34, 'y': 0, 'z': 0},
-            'velocity': {'x': 0, 'y': 0.13 , 'z': 0},
-            'mass': 0.123
-        }
+        'position': {'x': -0.73, 'y': 0, 'z': 0},
+        'velocity': {'x': 0, 'y': -0.0015, 'z': 0},
+        'mass': 1
+    },
+    'Body2': {
+        'timeStep': 0.01,
+        'time': 0.0,
+        'position': {'x': 60.34, 'y': 0, 'z': 0},
+        'velocity': {'x': 0, 'y': 0.13 , 'z': 0},
+        'mass': 0.123
     }
 }
