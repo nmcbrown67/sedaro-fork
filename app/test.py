@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-NOTE: Test the simulator locally. First build the `queries` lib with `cargo build --release` and then run this script.
+NOTE: Test the simulator locally. First build the `queries` binary with `cargo build --release` and then run this script.
 """
 
 from modsim import data
