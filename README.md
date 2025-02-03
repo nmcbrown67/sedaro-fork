@@ -67,27 +67,30 @@ Included in this directory is a tiny mockup of Sedaro's system. Though it techni
 
 ### Some Project Ideas
 
-- Simulator:
+- Simulator
+  - Speed up either buildtime or runtime
+  - "Compile" the query language which is currently interpreted
+  - Make simulations deterministic
+  - Parallelize simulation execution
+  - Expand the query language
+  - Expand the simulation semantics beyond simple pure functions
   - Improve the Q-Range KV Store data structure
-  - Make the system more generic/extensible
-  - Make it fast
-- Front End:
+- Web
   - Revamp the UI/UX with cool visualizations and interactivity
   - Live-stream the simulation
   - Show off your best creative work with a redesign
 - App
   - Add unique patterns of user engagement
-  - Make the simulation runtime parallel/asynchronous
-- Data:
+- Data
   - Create a more scalable storage solution than a JSON string in one DB row
   - Do some statistical analysis on the data
   - Set up background jobs to preprocess data
-- Modeling & Simulation:
+- Modeling & Simulation
   - Improve the numerical stability of the simulation functions
   - Implement additional modeling and simulation scope
   - Analyze the sensitivity to initial conditions
-- Etc:
+- Etc
   - Incorporate computational optimizations (e.g. linear programming)
 - Whatever you want; these are just suggestions to get you thinking
 
-![](./screenshot.png)
+![](./files/screenshot2.png)
