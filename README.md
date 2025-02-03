@@ -47,7 +47,10 @@ Once you have completed your solution, please follow the submission steps below.
         └── SimulateForm.tsx  # Define a simulation
 ```
 
-You may wish to search for `NOTE:` in the code to get situated.
+### Tips
+
+- You may wish to search for `NOTE:` in the code to get situated.
+- It's possible to work on parts of this repo outside of the docker containers for more rapid development
 
 ## Submission
 
