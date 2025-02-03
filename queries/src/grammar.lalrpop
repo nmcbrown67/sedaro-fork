@@ -1,3 +1,5 @@
+//! This file defines the grammar for the query language. See: https://lalrpop.github.io/lalrpop/
+
 use crate::Query;
 
 grammar;
@@ -11,7 +13,7 @@ pub Query: Query = {
     <q: Query> "." <s: r"[a-zA-Z][a-zA-z0-9]*"> => Query::Access{ base: Box::new(q), field: s.to_string() },
 }
 
-// Requires trailing comma for unary tupleish things
+// Requires trailing comma for unary tuple-ish things
 CommaPlus<T>: Vec<T> = {
     <mut v:(<T> ",")+> <e:T?> => match e {
         None => v,

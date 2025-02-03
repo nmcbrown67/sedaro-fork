@@ -144,6 +144,7 @@ agents = {
     ]
 }
 
+# NOTE: initial values are set here. we intentionally separate the data from the functions operating on it.
 data = {
     'Body1': {
         'timeStep': 0.01,

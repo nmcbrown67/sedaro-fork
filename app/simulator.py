@@ -62,6 +62,7 @@ class Simulator:
         return reduce(__or__, data, {}) # combine all data into one dictionary
 
     def step(self, agentId, universe):
+        """Run an Agent for a single step."""
         state = dict()
         sms = []
         for sm in self.sim_graph[agentId]:
@@ -75,6 +76,7 @@ class Simulator:
         return state
 
     def run_sm(self, agentId, sm, universe, newState):
+        """Run a State Manager for a single step."""
         inputs = []
         for q in sm["consumed"]:
             found = self.find(agentId, q, universe, newState)
@@ -86,6 +88,7 @@ class Simulator:
         return res
 
     def find(self, agentId, query, universe, newState: dict, prev=False):
+        """Find consumed data to pass to a State Manager."""
         # NOTE: queries are interpreted at runtime here
         match query["kind"]:
             case "Base":
@@ -121,6 +124,7 @@ class Simulator:
                 return None
 
     def put(self, agentId, query, universe, newState: dict, data):
+        """Put produced data into the universe."""
         match query["kind"]:
             case "Base":
                 agentState = newState.get(agentId)
@@ -149,6 +153,7 @@ class Simulator:
                 raise Exception(f"Tuple production not yet implemented")
 
     def simulate(self, iterations: int = 500):
+        """Simulate the universe for a given number of iterations."""
         for _ in range(iterations):
             for agentId in self.init:
                 t = self.times[agentId]
