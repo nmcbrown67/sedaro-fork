@@ -13,3 +13,22 @@ pub enum Query {
     Base(String),
     Tuple(Vec<Query>),
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test() {
+        let input = "prev!(time)";
+        let expected_output = r#"{"kind":"Prev","content":{"kind":"Base","content":"time"}}"#;
+
+        let parser = grammar::QueryParser::new();
+        let query = parser
+            .parse(input)
+            .unwrap_or_else(|err| panic!("Could not parse input! {err}"));
+        let output = serde_json::to_string(&query).unwrap();
+
+        assert_eq!(output, expected_output);
+    }
+}
