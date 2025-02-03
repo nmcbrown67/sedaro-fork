@@ -26,6 +26,29 @@ Once you have completed your solution, please follow the submission steps below.
    - It may take a few moments for the container to fully come up and serve the page.
    - Changes to both the React app and the Flask app should auto reload.
 
+### Directory Structure
+
+```sh
+.
+├── README.md                 # This README
+├── app                       # The backend (Python)
+│   ├── app.py                # Setup + API handling
+│   ├── modsim.py             # Modeling and simulation functions
+│   ├── simulator.py          # Core simulation runtime
+│   └── store.py              # In-memory stream data structure
+├── queries                   # Query-parsing library (Rust)
+│   └── src
+│       ├── grammar.lalrpop   # The syntax definition
+│       ├── lib.rs            # The parser library
+│       └── main.rs           # A binary for using the parser
+└── web                       # The frontend (React/TypeScript)
+    └── src
+        ├── App.tsx           # View simulation results
+        └── SimulateForm.tsx  # Define a simulation
+```
+
+You may wish to search for `NOTE:` in the code to get situated.
+
 ## Submission
 
 1. Remove any temporary or .gitignored files/directories, such as `__pycache__`, `node_modules`, `target`, or any local virtual environments.
