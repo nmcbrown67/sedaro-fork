@@ -43,13 +43,13 @@ def time_manager(time, timeStep):
     return time + timeStep
 
 '''
-Declare what agents should exist, and bind the consumed arguments and produced results to each other.
+NOTE: Declare what agents should exist, and bind the consumed arguments and produced results to each other.
 
 Query syntax:
 - `<variableName>` will do a dictionary lookup of `variableName` in the current state of the agent
    the query is running for.
-- prev!(<query>)` will get the value of `query` from the previous frame.
-- `agent!(<agentId>)` will get the last state produced by `agentId`.
+- prev!(<query>)` will get the value of `query` from the previous step of simulation.
+- `agent!(<agentId>)` will get the most recent state produced by `agentId`.
 - `<query>.<name>` will evaluate `query` and then look up `name` in the resulting dictionary.
 '''
 

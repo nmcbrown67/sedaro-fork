@@ -20,6 +20,7 @@ mod tests {
 
     #[test]
     fn test() {
+        // NOTE: This test gives and example input/output pair for the parser.
         let input = "prev!(time)";
         let expected_output = r#"{"kind":"Prev","content":{"kind":"Base","content":"time"}}"#;
 

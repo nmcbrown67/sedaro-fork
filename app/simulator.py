@@ -9,6 +9,7 @@ from modsim import agents
 from store import QRangeStore
 
 def parse_query(query):
+    # NOTE: The query parser is invoked via a subprocess call to the Rust binary
     popen = subprocess.Popen('../queries/sedaro-nano-queries', stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
     (stdout, _) = popen.communicate(query)
     if popen.returncode:
@@ -38,6 +39,7 @@ class Simulator:
     """
 
     def __init__(self, store: QRangeStore, init: dict):
+        # NOTE: Creating a Simulator object does all the simulation "building"
         self.store = store
         store[-999999999, 0] = init
         self.init = init
@@ -84,6 +86,7 @@ class Simulator:
         return res
 
     def find(self, agentId, query, universe, newState: dict, prev=False):
+        # NOTE: queries are interpreted at runtime here
         match query["kind"]:
             case "Base":
                 if prev:
@@ -143,7 +146,7 @@ class Simulator:
                     self.put(agentId, baseQuery, universe, newState, base)
                 base[query["content"]["field"]] = data
             case "Tuple":
-                raise Exception(f"Cannot produce tuple")
+                raise Exception(f"Tuple production not yet implemented")
 
     def simulate(self, iterations: int = 500):
         for _ in range(iterations):

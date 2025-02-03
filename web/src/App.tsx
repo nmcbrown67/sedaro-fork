@@ -34,6 +34,9 @@ const App = () => {
         const updatedPositionData: PlottedFrame = {};
         const updatedVelocityData: PlottedFrame = {};
 
+        // NOTE: Uncomment to see the raw data in the console
+        // console.log('Data:', data);
+
         setInitialState(data[0][2]);
 
         const baseData = () => ({
