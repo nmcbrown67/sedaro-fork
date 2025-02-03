@@ -1,4 +1,4 @@
-use sedaro_nano_queries::{grammar, Query};
+use sedaro_nano_queries::grammar;
 use serde::Serialize;
 use std::io::{read_to_string, stdin};
 
@@ -9,5 +9,8 @@ fn main() {
     let query = parser
         .parse(&s)
         .unwrap_or_else(|err| panic!("Could not parse input! {err}"));
-    print!("{}", query.serialize(serde_json::value::Serializer).unwrap())
+    print!(
+        "{}",
+        query.serialize(serde_json::value::Serializer).unwrap()
+    )
 }
