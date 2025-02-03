@@ -51,6 +51,9 @@ class QRangeStore:
         if not ret:
             raise IndexError("Not found.")
         return ret
+    
+    def __len__(self):
+        return len(self.store)
 
 
 doctest.testmod()
