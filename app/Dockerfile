@@ -21,6 +21,6 @@ COPY app .
 
 RUN mkdir /queries
 
-COPY --from=builder /queries/target/release/sedaro-nano-queries /queries/sedaro-nano-queries
+COPY --from=builder /queries/target/release/sedaro-nano-queries /queries/target/release/sedaro-nano-queries
 
 CMD [ "python3", "-m" , "flask", "run", "--debug", "--host=0.0.0.0", "--port=8000" ]

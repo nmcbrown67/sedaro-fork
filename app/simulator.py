@@ -10,7 +10,7 @@ from store import QRangeStore
 
 def parse_query(query):
     # NOTE: The query parser is invoked via a subprocess call to the Rust binary
-    popen = subprocess.Popen('../queries/sedaro-nano-queries', stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+    popen = subprocess.Popen('../queries/target/release/sedaro-nano-queries', stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
     (stdout, _) = popen.communicate(query)
     if popen.returncode:
         raise Exception("Parsing query failed!")
