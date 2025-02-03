@@ -50,7 +50,8 @@ Once you have completed your solution, please follow the submission steps below.
 ### Tips
 
 - You may wish to search for `NOTE:` in the code to get situated.
-- It's possible to work on parts of this repo outside of the docker containers for more rapid development
+- The Python and React code will auto-reload when edited, but Rust changes require manual rebuilds.
+- It's possible to work on parts of this repo outside of the docker containers for more rapid development.
 
 ## Submission
 
