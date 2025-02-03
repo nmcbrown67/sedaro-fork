@@ -6,7 +6,7 @@ import numpy as np
 
 
 def propagate_velocity(time_step, position, velocity, other_position, m_other):
-    """Propagete the velocity of the agent from `time` to `time + timeStep`."""
+    """Propagate the velocity of the agent from `time` to `time + timeStep`."""
     # Use law of gravitation to update velocity
     r_self = np.array([position['x'], position['y'], position['z']])
     v_self = np.array([velocity['x'], velocity['y'], velocity['z']])
@@ -35,7 +35,7 @@ def identity(arg):
     return arg
 
 def timestep_manager(velocity):
-    """Compute the length of the next simulation timestep for the agent"""
+    """Compute the length of the next simulation timeStep for the agent"""
     return 100
 
 def time_manager(time, timeStep):
@@ -43,7 +43,7 @@ def time_manager(time, timeStep):
     return time + timeStep
 
 '''
-Declare what agents should exist, and bind the consumed argements and produced results to each other.
+Declare what agents should exist, and bind the consumed arguments and produced results to each other.
 
 Query syntax:
 - `<variableName>` will do a dictionary lookup of `variableName` in the current state of the agent
