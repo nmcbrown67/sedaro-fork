@@ -1,16 +1,13 @@
 use sedaro_nano_queries::grammar;
-use serde::Serialize;
 use std::io::{read_to_string, stdin};
 
 fn main() {
-    let s =
+    let input =
         read_to_string(stdin()).unwrap_or_else(|err| panic!("Could not read input stream! {err}"));
     let parser = grammar::QueryParser::new();
     let query = parser
-        .parse(&s)
+        .parse(&input)
         .unwrap_or_else(|err| panic!("Could not parse input! {err}"));
-    print!(
-        "{}",
-        query.serialize(serde_json::value::Serializer).unwrap()
-    )
+    let output = serde_json::to_string(&query).unwrap();
+    print!("{output}")
 }
