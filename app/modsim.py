@@ -4,7 +4,6 @@ from random import random
 
 import numpy as np
 
-
 def propagate_velocity(time_step, position, velocity, other_position, m_other):
     """Propagate the velocity of the agent from `time` to `time + timeStep`."""
     # Use law of gravitation to update velocity
@@ -43,7 +42,8 @@ def time_manager(time, timeStep):
     return time + timeStep
 
 '''
-NOTE: Declare what agents should exist, and bind the consumed arguments and produced results to each other.
+NOTE: Declare what agents should exist, what functions should be run to update their state, 
+    and bind the consumed arguments and produced results to each other.
 
 Query syntax:
 - `<variableName>` will do a dictionary lookup of `variableName` in the current state of the agent
@@ -57,14 +57,10 @@ agents = {
     'Body1': [
         {
             'consumed': '''(
-                prev!(timeStep),
-                prev!(position),
                 prev!(velocity),
-                agent!(Body2).position,
-                agent!(Body2).mass,
             )''',
             'produced': '''velocity''',
-            'function': propagate_velocity,
+            'function': identity,
         },
         {
             'consumed': '''(
