@@ -10,10 +10,10 @@ from store import QRangeStore
 
 def parse_query(query):
     # NOTE: The query parser is invoked via a subprocess call to the Rust binary
-    popen = subprocess.Popen('../queries/target/release/sedaro-nano-queries', stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
-    (stdout, _) = popen.communicate(query)
+    popen = subprocess.Popen('../queries/target/release/sedaro-nano-queries', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    (stdout, stderr) = popen.communicate(query)
     if popen.returncode:
-        raise Exception("Parsing query failed!")
+        raise Exception(f"Parsing query failed: {stderr}")
     return json.loads(stdout)
 
 class Simulator:
@@ -72,6 +72,8 @@ class Simulator:
             for (agentId, sm) in sms:
                 if self.run_sm(agentId, sm, universe, state) is None:
                     next_sms.append((agentId, sm))
+            if len(sms) == len(next_sms):
+                raise Exception(f"No progress made while evaluating statemanagers for agent {agentId}. Remaining statemanagers: {[sm["func"].__name__ for (agentId, sm) in sms]}")
             sms = next_sms
         return state
 
