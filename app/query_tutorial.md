@@ -21,8 +21,8 @@ We'll need to extend the query to include the remaining arguments. We can get ou
 ```
             'consumed': '''(
                 timeStep,
-                prev!(velocity),
                 position,
+                prev!(velocity),
             )''',
 ```
 
@@ -36,9 +36,9 @@ We can avoid this by wrapping our consumed queries in `prev!()`, which indicates
 
 ```
             'consumed': '''(
-                timeStep,
+                prev!(timeStep),
+                prev!(position),
                 prev!(velocity),
-                position,
             )''',
 ```
 
