@@ -53,6 +53,9 @@ Once you have completed your solution, please follow the submission steps below.
 - The Python and React code will auto-reload when edited, but Rust changes require manual rebuilds.
 - It's possible to work on parts of this repo outside of the docker containers for more rapid development.
 
+### Tutorial
+In the initial version, the first body is not affected by the gravitational force of the second. See `app/query_tutorial.md` for guidance on fixing this, and a brief introduction to the nano query language.
+
 ## Submission
 
 1. Remove any temporary or .gitignored files/directories, such as `__pycache__`, `node_modules`, `target`, or any local virtual environments.
