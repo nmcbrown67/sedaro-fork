@@ -42,7 +42,7 @@ We can avoid this by wrapping our consumed queries in `prev!()`, which indicates
             )''',
 ```
 
-Finally, we need to add the data we're reading from the other agent. This also needs special handling - we'll use `agent!(Body2)` to indicate which agent we want to read from. To avoid deadlock, this reads from the most recent previous step of the other agent.
+Finally, we need to add the data we're reading from the other agent. This also needs special handling - we'll use `agent!(Body2)` to indicate which agent we want to read from. This will read data from the most recently computed state for the other agent, and will never cause a deadlock.
 
 ```
             'consumed': '''(
