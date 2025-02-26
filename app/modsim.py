@@ -4,38 +4,156 @@ from random import random
 
 import numpy as np
 
+def propagate_velocity(time_step, position, velocity, other_position, m_other):
+    """Propagate the velocity of the agent from `time` to `time + timeStep`."""
+    # Use law of gravitation to update velocity
+    r_self = np.array([position['x'], position['y'], position['z']])
+    v_self = np.array([velocity['x'], velocity['y'], velocity['z']])
+    r_other = np.array([other_position['x'], other_position['y'], other_position['z']])
 
-def propagate(agent_id, universe):
-    """Propagate agentId from `time` to `time + timeStep`."""
-    # Get simulation state
-    self_state = universe[agent_id]
-    time = self_state["time"]
-    time_step = self_state["timeStep"]
-
-    if agent_id == 'Body1':
-        other_body = 'Body2'
-    else:
-        other_body = 'Body1'
-    other_state = universe[other_body]
-
-    # Use law of gravitation to update position and velocity
-    r_self = np.array([self_state['x'], self_state['y'], self_state['z']])
-    v_self = np.array([self_state['vx'], self_state['vy'], self_state['vz']])
-    r_other = np.array([other_state['x'], other_state['y'], other_state['z']])
-    m_other = other_state['mass']
     r = r_self - r_other
     dvdt = -m_other * r / np.linalg.norm(r)**3
     v_self = v_self + dvdt * time_step
+
+    return {'x': v_self[0], 'y': v_self[1], 'z': v_self[2]}
+
+def propagate_position(time_step, position, velocity):
+    """Propagate the position of the agent from `time` to `time + timeStep`."""
+    # Apply velocity to position
+    r_self = np.array([position['x'], position['y'], position['z']])
+    v_self = np.array([velocity['x'], velocity['y'], velocity['z']])
+
     r_self = r_self + v_self * time_step
 
-    return {
-        "time": time + time_step,
-        "timeStep": 5. + random() * 9.,
-        "mass": self_state["mass"],
-        "x": r_self[0],
-        "y": r_self[1],
-        "z": r_self[2],
-        "vx": v_self[0],
-        "vy": v_self[1],
-        "vz": v_self[2],
+    return {'x': r_self[0], 'y': r_self[1], 'z': r_self[2]}
+
+def propagate_mass(mass):
+    return mass
+
+def identity(arg):
+    return arg
+
+def timestep_manager(velocity):
+    """Compute the length of the next simulation timeStep for the agent"""
+    return 100
+
+def time_manager(time, timeStep):
+    """Compute the time for the next simulation step for the agent"""
+    return time + timeStep
+
+'''
+NOTE: Declare what agents should exist, what functions should be run to update their state, 
+    and bind the consumed arguments and produced results to each other.
+
+Query syntax:
+- `<variableName>` will do a dictionary lookup of `variableName` in the current state of the agent
+   the query is running for.
+- prev!(<query>)` will get the value of `query` from the previous step of simulation.
+- `agent!(<agentId>)` will get the most recent state produced by `agentId`.
+- `<query>.<name>` will evaluate `query` and then look up `name` in the resulting dictionary.
+'''
+
+agents = {
+    'Body1': [
+        {
+            'consumed': '''(
+                prev!(velocity),
+            )''',
+            'produced': '''velocity''',
+            'function': identity,
+        },
+        {
+            'consumed': '''(
+                prev!(timeStep),
+                prev!(position),
+                velocity,
+            )''',
+            'produced': '''position''',
+            'function': propagate_position,
+        },
+        {
+            'consumed': '''(
+                prev!(mass),
+            )''',
+            'produced': '''mass''',
+            'function': propagate_mass,
+        },
+        {
+            'consumed': '''(
+                prev!(time),
+                timeStep
+            )''',
+            'produced': '''time''',
+            'function': time_manager,
+        },
+        {
+            'consumed': '''(
+                velocity,
+            )''',
+            'produced': '''timeStep''',
+            'function': timestep_manager,
+        }
+    ],
+    'Body2': [
+        {
+            'consumed': '''(
+                prev!(timeStep),
+                prev!(position),
+                prev!(velocity),
+                agent!(Body1).position,
+                agent!(Body1).mass,
+            )''',
+            'produced': '''velocity''',
+            'function': propagate_velocity,
+        },
+        {
+            'consumed': '''(
+                prev!(timeStep),
+                prev!(position),
+                velocity,
+            )''',
+            'produced': '''position''',
+            'function': propagate_position,
+        },
+        {
+            'consumed': '''(
+                prev!(mass),
+            )''',
+            'produced': '''mass''',
+            'function': propagate_mass,
+        },
+        {
+            'consumed': '''(
+                prev!(time),
+                timeStep
+            )''',
+            'produced': '''time''',
+            'function': time_manager,
+        },
+        {
+            'consumed': '''(
+                velocity,
+            )''',
+            'produced': '''timeStep''',
+            'function': timestep_manager,
+        }
+    ]
+}
+
+# NOTE: initial values are set here. we intentionally separate the data from the functions operating on it.
+data = {
+    'Body1': {
+        'timeStep': 0.01,
+        'time': 0.0,
+        'position': {'x': -0.73, 'y': 0, 'z': 0},
+        'velocity': {'x': 0, 'y': -0.0015, 'z': 0},
+        'mass': 1
+    },
+    'Body2': {
+        'timeStep': 0.01,
+        'time': 0.0,
+        'position': {'x': 60.34, 'y': 0, 'z': 0},
+        'velocity': {'x': 0, 'y': 0.13 , 'z': 0},
+        'mass': 0.123
     }
+}

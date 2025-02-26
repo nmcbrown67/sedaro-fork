@@ -20,15 +20,45 @@ Once you have completed your solution, please follow the submission steps below.
    - Please note that **only** cloning via HTTPS is supported
    - Please **do not** commit changes to any branch of this repository. If you would like to use git, you may fork this repository to create a private repo of your own
 2. Ensure that Docker is installed and running. To compile and run the app, execute the following command
-   - `docker compose up`
+   - `docker compose up --build`
    - Ensure your localhost ports `3030` and `8000` are available first.
 3. That's it ✅! Sedaro Nano should now be available via web browser at http://localhost:3030/. The API is running at http://localhost:8000/.
    - It may take a few moments for the container to fully come up and serve the page.
    - Changes to both the React app and the Flask app should auto reload.
 
+### Directory Structure
+
+```sh
+.
+├── README.md                 # This README
+├── app                       # The backend (Python)
+│   ├── app.py                # Setup + API handling
+│   ├── modsim.py             # Modeling and simulation functions
+│   ├── simulator.py          # Core simulation runtime
+│   └── store.py              # In-memory stream data structure
+├── queries                   # Query-parsing library (Rust)
+│   └── src
+│       ├── grammar.lalrpop   # The syntax definition
+│       ├── lib.rs            # The parser library
+│       └── main.rs           # A binary for using the parser
+└── web                       # The frontend (React/TypeScript)
+    └── src
+        ├── App.tsx           # View simulation results
+        └── SimulateForm.tsx  # Define a simulation
+```
+
+### Tips
+
+- You may wish to search for `NOTE:` in the code to get situated.
+- The Python and React code will auto-reload when edited, but Rust changes require manual rebuilds.
+- It's possible to work on parts of this repo outside of the docker containers for more rapid development.
+
+### Tutorial
+In the initial version, the first body is not affected by the gravitational force of the second. See `app/query_tutorial.md` for guidance on fixing this, and a brief introduction to the nano query language.
+
 ## Submission
 
-1. Remove any temporary or .gitignored files/directories, such as `__pycache__`, `node_modules`, or any local virtual environments.
+1. Remove any temporary or .gitignored files/directories, such as `__pycache__`, `node_modules`, `target`, or any local virtual environments.
 2. Include a writeup as detailed in the **Goal** section above. If relevant to your solution, please include screenshots and/or a link to a video.
 3. Compress your entire `sedaro_nano` directory into a `.zip` file.
 4. Email your solution to kacie.neurohr@sedaro.com and the other email(s) listed in the original instructions. Our mail server will often block submissions so we recommend sharing the .zip with us via a Google Drive link (or similar sharing service).
@@ -41,27 +71,30 @@ Included in this directory is a tiny mockup of Sedaro's system. Though it techni
 
 ### Some Project Ideas
 
-- Simulator:
+- Simulator
+  - Speed up either buildtime or runtime
+  - "Compile" the query language which is currently interpreted
+  - Make simulations deterministic
+  - Parallelize simulation execution
+  - Expand the query language
+  - Expand the simulation semantics beyond simple pure functions
   - Improve the Q-Range KV Store data structure
-  - Make the system more generic/extensible
-  - Make it fast
-- Front End:
+- Web
   - Revamp the UI/UX with cool visualizations and interactivity
   - Live-stream the simulation
   - Show off your best creative work with a redesign
 - App
   - Add unique patterns of user engagement
-  - Make the simulation runtime parallel/asynchronous
-- Data:
+- Data
   - Create a more scalable storage solution than a JSON string in one DB row
   - Do some statistical analysis on the data
   - Set up background jobs to preprocess data
-- Modeling & Simulation:
+- Modeling & Simulation
   - Improve the numerical stability of the simulation functions
   - Implement additional modeling and simulation scope
   - Analyze the sensitivity to initial conditions
-- Etc:
+- Etc
   - Incorporate computational optimizations (e.g. linear programming)
 - Whatever you want; these are just suggestions to get you thinking
 
-![](./screenshot.png)
+![](./files/screenshot2.png)

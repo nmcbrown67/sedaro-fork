@@ -8,7 +8,8 @@ from flask_sqlalchemy import SQLAlchemy
 from simulator import Simulator
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from store import QRangeStore
-
+import logging
+from datetime import datetime
 
 class Base(DeclarativeBase):
     pass
@@ -23,6 +24,7 @@ db = SQLAlchemy(model_class=Base)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 db.init_app(app)
 
+logging.basicConfig(level=logging.INFO)
 
 ############################## Database Models ##############################
 
@@ -66,11 +68,15 @@ def simulate():
         init[key]["timeStep"] = 0.01
 
     # Create store and simulator
+    t = datetime.now()
     store = QRangeStore()
     simulator = Simulator(store=store, init=init)
+    logging.info(f"Time to Build: {datetime.now() - t}")
 
     # Run simulation
+    t = datetime.now()
     simulator.simulate()
+    logging.info(f"Time to Simulate: {datetime.now() - t}")
 
     # Save data to database
     simulation = Simulation(data=json.dumps(store.store))

@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { Routes } from 'routes';
 
 // Input data from the simulation
-type AgentData = Record<string, number>;
+type AgentData = Record<string, Record<string, number>>;
 type DataFrame = Record<string, AgentData>;
 type DataPoint = [number, number, DataFrame];
 
@@ -34,6 +34,9 @@ const App = () => {
         const updatedPositionData: PlottedFrame = {};
         const updatedVelocityData: PlottedFrame = {};
 
+        // NOTE: Uncomment to see the raw data in the console
+        // console.log('Data:', data);
+
         setInitialState(data[0][2]);
 
         const baseData = () => ({
@@ -47,16 +50,20 @@ const App = () => {
         });
 
         data.forEach(([t0, t1, frame]) => {
-          for (let [agentId, { x, y, z, vx, vy, vz }] of Object.entries(frame)) {
-            updatedPositionData[agentId] = updatedPositionData[agentId] || baseData();
-            updatedPositionData[agentId].x.push(x);
-            updatedPositionData[agentId].y.push(y);
-            updatedPositionData[agentId].z.push(z);
+          for (let [agentId, val] of Object.entries(frame)) {
+              if (agentId == "time" || agentId == "timeStep") {
+                continue;
+              }
+              let {position, velocity} = val;
+              updatedPositionData[agentId] = updatedPositionData[agentId] || baseData();
+              updatedPositionData[agentId].x.push(position.x);
+              updatedPositionData[agentId].y.push(position.y);
+              updatedPositionData[agentId].z.push(position.z);
 
-            updatedVelocityData[agentId] = updatedVelocityData[agentId] || baseData();
-            updatedVelocityData[agentId].x.push(vx);
-            updatedVelocityData[agentId].y.push(vy);
-            updatedVelocityData[agentId].z.push(vz);
+              updatedVelocityData[agentId] = updatedVelocityData[agentId] || baseData();
+              updatedVelocityData[agentId].x.push(velocity.x);
+              updatedVelocityData[agentId].y.push(velocity.y);
+              updatedVelocityData[agentId].z.push(velocity.z);
           }
         });
         setPositionData(Object.values(updatedPositionData));
@@ -138,22 +145,29 @@ const App = () => {
               <Table.Row>
                 <Table.ColumnHeaderCell>Agent</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>Initial Position (x,y, z)</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Initial Velocity (x,y)</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Initial Velocity (x,y,z)</Table.ColumnHeaderCell>
               </Table.Row>
             </Table.Header>
 
             <Table.Body>
-              {Object.entries(initialState).map(([agentId, { x, y, z, vx, vy, vz }]) => (
+              {Object.entries(initialState).flatMap(
+                  ([agentId, { position, velocity }]) => {
+                    if (position) {
+                    return (
                 <Table.Row key={agentId}>
                   <Table.RowHeaderCell>{agentId}</Table.RowHeaderCell>
                   <Table.Cell>
-                    ({x}, {y}, {z})
+                    ({position.x}, {position.y}, {position.z})
                   </Table.Cell>
                   <Table.Cell>
-                    ({vx}, {vy}, {vz})
+                    ({velocity.x}, {velocity.y}, {velocity.z})
                   </Table.Cell>
                 </Table.Row>
-              ))}
+                  );} else {
+                    return null;
+                  }
+                }
+              )}
             </Table.Body>
           </Table.Root>
         </Flex>

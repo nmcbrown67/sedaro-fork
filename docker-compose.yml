@@ -9,7 +9,9 @@ services:
       - /web/node_modules/
   app:
     container_name: app
-    build: app
+    build:
+      context: .
+      dockerfile: app/Dockerfile
     ports:
       - '8000:8000'
     volumes:
