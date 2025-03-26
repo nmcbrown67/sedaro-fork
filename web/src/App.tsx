@@ -82,19 +82,54 @@ const App = () => {
   }, []);
 
   return (
+    
     <div
       style={{
         height: '100vh',
         width: '100vw',
         margin: '0 auto',
+        position: 'relative',
+       overflow: 'hidden',
+      
       }}
     >
+        //* UI CHANGE: Background Video
+  <video
+    autoPlay
+    loop
+    muted
+    playsInline
+    preload="auto"
+    style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      minWidth: '100%',
+      minHeight: '100%',
+      objectFit: 'cover',
+      zIndex: 0,
+    }}
+  >
+    <source src="/bg_video.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+
       {/* Flex: https://www.radix-ui.com/themes/docs/components/flex */}
-      <Flex direction="column" m="4" width="100%" justify="center" align="center">
-        <Heading as="h1" size="8" weight="bold" mb="4">
+      <Flex direction="column" m="4" width="100%" justify="center" align="center" style={{ position: 'relative', zIndex: 1 }}>
+        <Heading 
+          as="h1" 
+          size="8" 
+          weight="bold" 
+          mb="4"
+          style={{
+            fontFamily: "'Poppins', 'Helvetica Neue', Arial, sans-serif",
+            letterSpacing: '-0.02em',
+            color: "brown"
+          }}
+        >
           Simulation Data
         </Heading>
-        <Link to={Routes.FORM}>Define new simulation parameters</Link>
+        <Link to={Routes.FORM} >Define new simulation parameters</Link>
         <Separator size="4" my="5" />
         <Flex direction="row" width="100%" justify="center">
           <Plot
