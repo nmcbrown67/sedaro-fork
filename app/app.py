@@ -11,6 +11,33 @@ from store import QRangeStore
 import logging
 from datetime import datetime
 
+from flask_socketio import SocketIO
+from flask_socketio import send, emit
+
+import eventlet
+
+
+''' Goal: Live stream
+
+    High Level Plan: Form communication bewtween backend and frontend so instead of
+    running simulator and dumping/sending data to frontend, 
+
+    make a communication pipe and as simulator runs send data in chunks
+
+    Things to Use (Research):
+
+    1. Websocket: 
+
+    communication protocol that enables real-time, two-way interaction between a client (like a browser) and a server
+    Unlike traditional HTTP (request/response), WebSockets stay open after the initial handshake.
+    This means the server can push data to the client at any time, without waiting for the client to ask.
+
+    2. Flask-socket-io : Python library that integrates WebSockets with Flask
+
+    3. Use eventlet to handle non-blocking (asynch confuses me so honestly want to avoid)
+
+    Reference Library: https://flask-socketio.readthedocs.io/en/latest/getting_started.html
+'''
 class Base(DeclarativeBase):
     pass
 
@@ -25,6 +52,10 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 db.init_app(app)
 
 logging.basicConfig(level=logging.INFO)
+
+# MC: Socket io initialize
+
+socketIO = SocketIO(app, logger="True", engineio_logger=True, asynch_mode = "eventlet", cors_allowed_origins= "*")
 
 ############################## Database Models ##############################
 
@@ -44,6 +75,7 @@ with app.app_context():
 @app.get("/")
 def health():
     return "<p>Sedaro Nano API - running!</p>"
+
 
 
 @app.get("/simulation")
@@ -83,4 +115,67 @@ def simulate():
     db.session.add(simulation)
     db.session.commit()
 
+    # ME: returns simulation data to client 
     return store.store
+
+
+#MC: Server side event handler for simulation data 
+
+def ack():
+    print('message was received!!')
+'''
+
+Tip: use (emit) for named event
+
+HIGH LEVEL STEPS:
+
+    1. listens for event from client
+
+    2. initialize simulation
+
+    3. Run simulation - use simulate method
+
+    4. emit updated simulation data to frontend/client side
+
+    5. when simulation done send finito message to client side
+
+    6. error handling - if client disconnects stop simulaiton
+'''
+
+# 1
+@socketIO.on('client_simulation_start')
+def handle_simulation_data(init):
+
+    #2 Initialize simulation
+    for key in init.keys():
+        init[key]["time"] = 0
+        init[key]["timeStep"] = 0.01
+
+    store = QRangeStore()
+    simulator = Simulator(store=store, init=init)
+    
+    #3 Run simulation (copy simulator method but replace self with simulator)
+    iterations = 500 
+    for _ in range(iterations):
+            for agentId in simulator.init:
+                t = simulator.times[agentId]
+                universe = simulator.read(t - 0.001)
+                if set(universe) == set(simulator.init):
+
+                    newState = simulator.step(agentId, universe)
+                    simulator.store[t, newState[agentId]["time"]] = newState
+                    simulator.times[agentId] = newState[agentId]["time"]
+    
+                    #4 For each agent emit
+                    emit('simulation_response', {agentId: newState})
+            eventlet.sleep(.1)
+
+    emit('simulation_complete', {'message': 'Simulation finished'})
+    
+
+
+
+### Actually Running the Server ###
+
+if __name__ == '__main__':
+    socketIO.run(app, port=8000)
