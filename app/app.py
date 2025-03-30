@@ -14,7 +14,7 @@ from datetime import datetime
 from flask_socketio import SocketIO
 from flask_socketio import send, emit
 
-import eventlet
+import time
 
 
 ''' Goal: Live stream
@@ -55,7 +55,7 @@ logging.basicConfig(level=logging.INFO)
 
 # MC: Socket io initialize
 
-socketIO = SocketIO(app, logger="True", engineio_logger=True, asynch_mode = "eventlet", cors_allowed_origins= "*")
+socketIO = SocketIO(app, logger="True", engineio_logger=True, cors_allowed_origins= "*")
 
 ############################## Database Models ##############################
 
@@ -146,6 +146,8 @@ HIGH LEVEL STEPS:
 @socketIO.on('client_simulation_start')
 def handle_simulation_data(init):
 
+    print("Received client_simulation_start event with init:", init)
+
     #2 Initialize simulation
     for key in init.keys():
         init[key]["time"] = 0
@@ -168,7 +170,7 @@ def handle_simulation_data(init):
     
                     #4 For each agent emit
                     emit('simulation_response', {agentId: newState})
-            eventlet.sleep(.1)
+            time.sleep(0.1)
 
     emit('simulation_complete', {'message': 'Simulation finished'})
     

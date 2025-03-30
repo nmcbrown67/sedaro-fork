@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Plot from 'react-plotly.js';
 import { Link } from 'react-router-dom';
 import { Routes } from 'routes';
-import { io, Socket } from 'socket.io-client';
+
 
 // Input data from the simulation
 type AgentData = Record<string, Record<string, number>>;
@@ -20,18 +20,12 @@ const App = () => {
   const [velocityData, setVelocityData] = useState<PlottedAgentData[]>([]);
   const [initialState, setInitialState] = useState<DataFrame>({});
 
-  //* MC: Socket state
 
-  const [socket, setSocket] = useState<Socket | undefined>(undefined)
 
   useEffect(() => {
 
 
-    const new_socket: Socket = io('http://localhost:8000');
-
-    setSocket(new_socket);
-
-    //! Ended here for now
+  
 
     // fetch plot data when the component mounts
     let canceled = false;
