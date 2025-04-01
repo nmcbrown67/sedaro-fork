@@ -7,6 +7,7 @@ import { Routes } from 'routes';
 
 type FormValue = number | '';
 interface FormData {
+  speed: FormValue;
   Body1: {
     position: {
       x: FormValue;
@@ -39,6 +40,7 @@ const SimulateForm: React.FC = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState<FormData>({
+    speed: 5, // Default speed (higher = faster)
     Body1: { position: {x: -0.73, y: 0, z: 0}, velocity: {x: 0, y: -0.0015, z: 0}, mass: 1 },
     Body2: { position: {x: 60.34, y: 0, z: 0}, velocity: {x: 0, y: 0.13, z: 0}, mass: 0.0123 },
   });
@@ -53,22 +55,33 @@ const SimulateForm: React.FC = () => {
     async (e: React.FormEvent) => {
       e.preventDefault();
       try {
-        const response = await fetch('http://localhost:8000/simulation', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
+        // Convert form data to URL search params
+        const searchParams = new URLSearchParams();
+        Object.entries(formData).forEach(([body, data]) => {
+          if (!data) return;
+          
+          Object.entries(data).forEach(([key, value]) => {
+            if (!value) return;
+            
+            if (typeof value === 'object') {
+              Object.entries(value).forEach(([coord, val]) => {
+                if (val !== undefined && val !== null) {
+                  searchParams.append(`${body}.${key}.${coord}`, val.toString());
+                }
+              });
+            } else {
+              searchParams.append(`${body}.${key}`, value.toString());
+            }
+          });
         });
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        navigate(Routes.SIMULATION);
+
+        // Navigate to simulation page with query parameters
+        navigate(`${Routes.SIMULATION}?${searchParams.toString()}`);
       } catch (error) {
         console.error('Error:', error);
       }
     },
-    [formData]
+    [formData, navigate]
   );
 
   return (
@@ -92,6 +105,17 @@ const SimulateForm: React.FC = () => {
         <Link to={Routes.SIMULATION}>View previous simulation</Link>
         <Separator size="4" my="5" />
         <Form onSubmit={handleSubmit}>
+          <FormField name="speed">
+            <FormLabel htmlFor="speed">Simulation Speed (higher = faster)</FormLabel>
+            <TextField.Root
+              type="number"
+              id="speed"
+              name="speed"
+              value={formData.speed}
+              onChange={handleChange}
+              required
+            />
+          </FormField>
           {/* 
             *********************************
             Body1

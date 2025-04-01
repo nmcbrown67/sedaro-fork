@@ -4,6 +4,7 @@ from functools import reduce
 from operator import __or__
 import subprocess
 import json
+import logging
 
 from modsim import agents
 from store import QRangeStore
@@ -73,7 +74,7 @@ class Simulator:
                 if self.run_sm(agentId, sm, universe, state) is None:
                     next_sms.append((agentId, sm))
             if len(sms) == len(next_sms):
-                raise Exception(f"No progress made while evaluating statemanagers for agent {agentId}. Remaining statemanagers: {[sm["func"].__name__ for (agentId, sm) in sms]}")
+                raise Exception(f"No progress made while evaluating statemanagers for agent {agentId}. Remaining statemanagers: {[sm['func'].__name__ for (agentId, sm) in sms]}")
             sms = next_sms
         return state
 
@@ -157,21 +158,35 @@ class Simulator:
     #MC: Changed simulate function to work in yielding agent/state data in cycles instead of all at onces
     def simulate(self, iterations: int = 500):
         """Simulate the universe for a given number of iterations."""
-
-        cycle = dict()
-
         for _ in range(iterations):
+            cycle = dict()  # Reset cycle data for each iteration
             for agentId in self.init:
                 t = self.times[agentId]
                 universe = self.read(t - 0.001)
                 if set(universe) == set(self.init):
                     newState = self.step(agentId, universe)
+                    logging.info(f"New state for {agentId}: {newState}")
                     self.store[t, newState[agentId]["time"]] = newState
                     self.times[agentId] = newState[agentId]["time"]
 
-                    cycle[agentId] = newState[agentId]
-        
-        # Using yield instead of return bc trying to sequence data in intervals for live simulation
-        yield cycle
+                    # Transform the state to match frontend's expected format
+                    cycle[agentId] = {
+                        "position": newState[agentId].get("position", {"x": 0, "y": 0, "z": 0}),
+                        "velocity": newState[agentId].get("velocity", {"x": 0, "y": 0, "z": 0})
+                    }
+                    
+                    # Log the transformed data for this agent
+                    logging.info(f"Transformed state for {agentId}: {cycle[agentId]}")
+                    
+                    # Verify position and velocity data are properly formatted
+                    pos = cycle[agentId]["position"]
+                    vel = cycle[agentId]["velocity"]
+                    if not all(isinstance(pos.get(k), (int, float)) for k in ["x", "y", "z"]):
+                        logging.error(f"Invalid position data for {agentId}: {pos}")
+                    if not all(isinstance(vel.get(k), (int, float)) for k in ["x", "y", "z"]):
+                        logging.error(f"Invalid velocity data for {agentId}: {vel}")
+                        
+            logging.info(f"Yielding cycle: {cycle}")
+            yield cycle
 
             

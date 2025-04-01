@@ -4,7 +4,7 @@ from random import random
 
 import numpy as np
 
-def propagate_velocity(time_step, position, velocity, other_position, m_other):
+def propagate_velocity(timeStep, position, velocity, other_position, m_other):
     """Propagate the velocity of the agent from `time` to `time + timeStep`."""
     # Use law of gravitation to update velocity
     r_self = np.array([position['x'], position['y'], position['z']])
@@ -13,17 +13,17 @@ def propagate_velocity(time_step, position, velocity, other_position, m_other):
 
     r = r_self - r_other
     dvdt = -m_other * r / np.linalg.norm(r)**3
-    v_self = v_self + dvdt * time_step
+    v_self = v_self + dvdt * timeStep
 
     return {'x': v_self[0], 'y': v_self[1], 'z': v_self[2]}
 
-def propagate_position(time_step, position, velocity):
+def propagate_position(timeStep, position, velocity):
     """Propagate the position of the agent from `time` to `time + timeStep`."""
     # Apply velocity to position
     r_self = np.array([position['x'], position['y'], position['z']])
     v_self = np.array([velocity['x'], velocity['y'], velocity['z']])
 
-    r_self = r_self + v_self * time_step
+    r_self = r_self + v_self * timeStep
 
     return {'x': r_self[0], 'y': r_self[1], 'z': r_self[2]}
 
@@ -35,7 +35,7 @@ def identity(arg):
 
 def timestep_manager(velocity):
     """Compute the length of the next simulation timeStep for the agent"""
-    return 100
+    return 0.1  # Increased from 0.01 for faster simulation
 
 def time_manager(time, timeStep):
     """Compute the time for the next simulation step for the agent"""
@@ -60,7 +60,7 @@ agents = {
     'Body1': [
         {
             'consumed': '''(
-                prev!(time_step),
+                prev!(timeStep),
                 prev!(position),
                 prev!(velocity),
                 agent!(Body2).position,
@@ -150,14 +150,14 @@ agents = {
 # NOTE: initial values are set here. we intentionally separate the data from the functions operating on it.
 data = {
     'Body1': {
-        'timeStep': 0.01,
+        'timeStep': 0.1,
         'time': 0.0,
         'position': {'x': -0.73, 'y': 0, 'z': 0},
         'velocity': {'x': 0, 'y': -0.0015, 'z': 0},
         'mass': 1
     },
     'Body2': {
-        'timeStep': 0.01,
+        'timeStep': 0.1,
         'time': 0.0,
         'position': {'x': 60.34, 'y': 0, 'z': 0},
         'velocity': {'x': 0, 'y': 0.13 , 'z': 0},

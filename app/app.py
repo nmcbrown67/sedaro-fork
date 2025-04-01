@@ -63,7 +63,7 @@ PLAN 2:
             
             return Response(eventStream(), mimetype="text/event-stream")
 
-        hypothetical event source that checks if there’s a new inbox message and yield the new message
+        hypothetical event source that checks if there's a new inbox message and yield the new message
 
     STEPS:
 
@@ -83,7 +83,7 @@ class Base(DeclarativeBase):
 ############################## Application Configuration ##############################
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:3030"])
+CORS(app, origins="*", supports_credentials=True)
 
 db = SQLAlchemy(model_class=Base)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
@@ -131,65 +131,100 @@ def get_data():
 
 @app.get("/simulation/stream")
 def stream_simulation():
-    # init = {
-    #     "Body1": {"x": 0, "y": 0.1, "vx": 0.1, "vy": 0},
-    #     "Body2": {"x": 0, "y": 1, "vx": 1, "vy": 0},
-    # }
+    try:
+        # Get initial conditions from query parameters
+        init = {
+            "Body1": {
+                "position": {
+                    "x": float(request.args.get("Body1.position.x", 0)),
+                    "y": float(request.args.get("Body1.position.y", 0)),
+                    "z": float(request.args.get("Body1.position.z", 0))
+                },
+                "velocity": {
+                    "x": float(request.args.get("Body1.velocity.x", 0)),
+                    "y": float(request.args.get("Body1.velocity.y", 0)),
+                    "z": float(request.args.get("Body1.velocity.z", 0))
+                },
+                "mass": float(request.args.get("Body1.mass", 1))
+            },
+            "Body2": {
+                "position": {
+                    "x": float(request.args.get("Body2.position.x", 0)),
+                    "y": float(request.args.get("Body2.position.y", 0)),
+                    "z": float(request.args.get("Body2.position.z", 0))
+                },
+                "velocity": {
+                    "x": float(request.args.get("Body2.velocity.x", 0)),
+                    "y": float(request.args.get("Body2.velocity.y", 0)),
+                    "z": float(request.args.get("Body2.velocity.z", 0))
+                },
+                "mass": float(request.args.get("Body2.mass", 1))
+            }
+        }
 
-    # Define time and timeStep for each agent
-    init: dict = request.json
-    for key in init.keys():
-        init[key]["time"] = 0
-        init[key]["timeStep"] = 0.01
+        logging.info(f"Received initial conditions: {init}")
 
-    # Create store and simulator
-    t = datetime.now()
-    store = QRangeStore()
-    simulator = Simulator(store=store, init=init)
-    logging.info(f"Time to Build: {datetime.now() - t}")
+        # Define time and timeStep for each agent
+        for key in init.keys():
+            init[key]["time"] = 0
+            init[key]["timeStep"] = 0.1  # Increased from 0.01 to 0.1 for faster simulation
 
-    def event_stream():
-        for cycle in simulator.simulate(500):
+        # Create store and simulator
+        t = datetime.now()
+        store = QRangeStore()
+        simulator = Simulator(store=store, init=init)
+        logging.info(f"Time to Build: {datetime.now() - t}")
 
-            yield f"data: {json.dumps(cycle)}\n\n"
+        def event_stream():
+            try:
+                # Send an initial heartbeat
+                yield f"data: {json.dumps({'heartbeat': True})}\n\n"
+                
+                # Get speed parameter (higher = faster simulation)
+                speed = float(request.args.get("speed", 1.0))
+                
+                for i, cycle in enumerate(simulator.simulate(iterations=500)):
+                    try:
+                        logging.info(f"Sending cycle {i}: {cycle}")
+                        yield f"data: {json.dumps(cycle)}\n\n"
+                        
+                        # Send a heartbeat every 10 cycles to keep the connection alive
+                        if i % 10 == 0:
+                            yield f"data: {json.dumps({'heartbeat': True})}\n\n"
+                            
+                        # Faster simulation with minimal delay
+                        time.sleep(max(0.01, 0.05 / speed))  # Reduced minimum delay and added speed control
+                    except Exception as e:
+                        logging.error(f"Error in cycle {i}: {str(e)}")
+                        yield f"data: {json.dumps({'error': str(e)})}\n\n"
+                        continue
+                        
+                # Send a final message to indicate completion
+                yield f"data: {json.dumps({'complete': True})}\n\n"
+                
+            except Exception as e:
+                logging.error(f"Error in event stream: {str(e)}")
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
-        return Response(stream_with_context(event_stream()), mimetype="text/event_stream")
-
-@app.post("/simulation")
-def simulate():
-    # Get data from request in this form
-    # init = {
-    #     "Body1": {"x": 0, "y": 0.1, "vx": 0.1, "vy": 0},
-    #     "Body2": {"x": 0, "y": 1, "vx": 1, "vy": 0},
-    # }
-
-    # Define time and timeStep for each agent
-    init: dict = request.json
-    for key in init.keys():
-        init[key]["time"] = 0
-        init[key]["timeStep"] = 0.01
-
-    # Create store and simulator
-    t = datetime.now()
-    store = QRangeStore()
-    simulator = Simulator(store=store, init=init)
-    logging.info(f"Time to Build: {datetime.now() - t}")
-
-    # Run simulation
-    t = datetime.now()
-    simulator.simulate()
-    logging.info(f"Time to Simulate: {datetime.now() - t}")
-
-    # Save data to database
-    simulation = Simulation(data=json.dumps(store.store))
-    db.session.add(simulation)
-    db.session.commit()
-
-    # ME: returns simulation data to client 
-    return store.store
-
-
-
+        return Response(
+            stream_with_context(event_stream()),
+            mimetype="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "Content-Type",
+                "Content-Type": "text/event-stream"
+            }
+        )
+    except Exception as e:
+        logging.error(f"Error in stream_simulation: {str(e)}")
+        return Response(
+            f"Error: {str(e)}",
+            status=500,
+            mimetype="text/plain"
+        )
 
 ############################## Running the Server ##############################
 

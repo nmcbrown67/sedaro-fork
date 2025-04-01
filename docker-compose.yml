@@ -7,6 +7,13 @@ services:
     volumes:
       - ./web/:/web/
       - /web/node_modules/
+    environment:
+      - VITE_API_URL=http://app:8000
+    depends_on:
+      - app
+    networks:
+      - app-network
+
   app:
     container_name: app
     build:
@@ -17,7 +24,12 @@ services:
     volumes:
       - ./app/:/app/
       - /app/instance/
-      
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   node_modules_web:
