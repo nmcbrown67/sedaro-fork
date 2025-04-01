@@ -3,6 +3,7 @@
 import json
 
 from flask import Flask, request
+from flask import Response, stream_with_context
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from simulator import Simulator
@@ -13,6 +14,9 @@ from datetime import datetime
 
 from flask_socketio import SocketIO
 from flask_socketio import send, emit
+
+import time
+
 
 import time
 
@@ -118,66 +122,117 @@ def simulate():
     # ME: returns simulation data to client 
     return store.store
 
+# @app.route("/simulation-sse", methods=["GET"])
+# def simulation_sse():
+#     """
+#     SSE endpoint for live simulation updates.
+#     Since EventSource sends GET requests, we use default initial conditions.
+#     (If you need dynamic conditions, consider using query parameters or a two-step approach.)
+#     """
+#     # Default initial conditions.
+#     init = {
+#         "Body1": {
+#             "time": 0,
+#             "timeStep": 0.01,
+#             "mass": 1,
+#             "position": {"x": -1, "y": 0, "z": 0},
+#             "velocity": {"x": 0, "y": 0.2, "z": 0}
+#         },
+#         "Body2": {
+#             "time": 0,
+#             "timeStep": 0.01,
+#             "mass": 1,
+#             "position": {"x": 1, "y": 0, "z": 0},
+#             "velocity": {"x": 0, "y": -0.2, "z": 0}
+#         }
+#     }
 
-#MC: Server side event handler for simulation data 
+#     store = QRangeStore()
+#     simulator = Simulator(store=store, init=init)
 
-def ack():
-    print('message was received!!')
-'''
+#     def generate():
+#         iterations = 500  # Adjust the number of iterations as needed.
+#         for _ in range(iterations):
+#             for agentId in simulator.init:
+#                 t = simulator.times[agentId]
+#                 universe = simulator.read(t - 0.001)
+#                 if set(universe) == set(simulator.init):
+#                     newState = simulator.step(agentId, universe)
+#                     simulator.store[t, newState[agentId]["time"]] = newState
+#                     simulator.times[agentId] = newState[agentId]["time"]
+#                     # Yield the update as an SSE event.
+#                     yield f"data: {json.dumps(newState)}\n\n"
+#             time.sleep(0.1)
+#         # Final event to indicate simulation is finished.
+#         yield f"data: {json.dumps({'message': 'Simulation finished'})}\n\n"
 
-Tip: use (emit) for named event
-
-HIGH LEVEL STEPS:
-
-    1. listens for event from client
-
-    2. initialize simulation
-
-    3. Run simulation - use simulate method
-
-    4. emit updated simulation data to frontend/client side
-
-    5. when simulation done send finito message to client side
-
-    6. error handling - if client disconnects stop simulaiton
-'''
-
-# 1
-@socketIO.on('client_simulation_start')
-def handle_simulation_data(init):
-
-    print("Received client_simulation_start event with init:", init)
-
-    #2 Initialize simulation
-    for key in init.keys():
-        init[key]["time"] = 0
-        init[key]["timeStep"] = 0.01
-
-    store = QRangeStore()
-    simulator = Simulator(store=store, init=init)
-    
-    #3 Run simulation (copy simulator method but replace self with simulator)
-    iterations = 500 
-    for _ in range(iterations):
-            for agentId in simulator.init:
-                t = simulator.times[agentId]
-                universe = simulator.read(t - 0.001)
-                if set(universe) == set(simulator.init):
-
-                    newState = simulator.step(agentId, universe)
-                    simulator.store[t, newState[agentId]["time"]] = newState
-                    simulator.times[agentId] = newState[agentId]["time"]
-    
-                    #4 For each agent emit
-                    emit('simulation_response', {agentId: newState})
-            time.sleep(0.1)
-
-    emit('simulation_complete', {'message': 'Simulation finished'})
-    
+#     return Response(stream_with_context(generate()), mimetype="text/event-stream")
 
 
-
-### Actually Running the Server ###
+############################## Running the Server ##############################
 
 if __name__ == '__main__':
-    socketIO.run(app, port=8000)
+    app.run(port=8000)
+
+# #MC: Server side event handler for simulation data 
+
+# def ack():
+#     print('message was received!!')
+# '''
+
+# Tip: use (emit) for named event
+
+# HIGH LEVEL STEPS:
+
+#     1. listens for event from client
+
+#     2. initialize simulation
+
+#     3. Run simulation - use simulate method
+
+#     4. emit updated simulation data to frontend/client side
+
+#     5. when simulation done send finito message to client side
+
+#     6. error handling - if client disconnects stop simulaiton
+# '''
+
+# # 1
+# @socketIO.on('client_simulation_start')
+# def handle_simulation_data(init):
+
+#     print("Received client_simulation_start event with init:", init)
+
+#     #2 Initialize simulation
+#     for key in init.keys():
+#         init[key]["time"] = 0
+#         init[key]["timeStep"] = 0.01
+
+#     store = QRangeStore()
+#     simulator = Simulator(store=store, init=init)
+    
+#     #3 Run simulation (copy simulator method but replace self with simulator)
+#     iterations = 500 
+#     for _ in range(iterations):
+#             for agentId in simulator.init:
+#                 t = simulator.times[agentId]
+#                 universe = simulator.read(t - 0.001)
+#                 if set(universe) == set(simulator.init):
+
+#                     newState = simulator.step(agentId, universe)
+#                     simulator.store[t, newState[agentId]["time"]] = newState
+#                     simulator.times[agentId] = newState[agentId]["time"]
+    
+#                     #4 For each agent emit
+#                     emit('simulation_response', {agentId: newState})
+#             time.sleep(0.1)
+
+#     emit('simulation_complete', {'message': 'Simulation finished'})
+    
+
+
+
+# ### Actually Running the Server ###
+
+# if __name__ == '__main__':
+#     socketIO.run(app, port=8000)

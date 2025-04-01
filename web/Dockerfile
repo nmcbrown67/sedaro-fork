@@ -11,6 +11,8 @@ WORKDIR /web
 # Add web
 COPY . .
 
+COPY package.json package-lock.json ./
+
 # Install project dependencies
 RUN npm install
 

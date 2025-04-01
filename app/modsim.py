@@ -53,14 +53,21 @@ Query syntax:
 - `<query>.<name>` will evaluate `query` and then look up `name` in the resulting dictionary.
 '''
 
+'''''HAVE TO EDIT THIS FOR GRAVITY'''
+
+# def propagate_velocity(time_step, position, velocity, other_position, m_other):
 agents = {
     'Body1': [
         {
             'consumed': '''(
+                prev!(time_step),
+                prev!(position),
                 prev!(velocity),
+                agent!(Body2).position,
+                agent!(Body2).mass,
             )''',
             'produced': '''velocity''',
-            'function': identity,
+            'function': propagate_velocity,
         },
         {
             'consumed': '''(
