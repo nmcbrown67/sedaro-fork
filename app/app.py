@@ -12,13 +12,10 @@ from store import QRangeStore
 import logging
 from datetime import datetime
 
-from flask_socketio import SocketIO
-from flask_socketio import send, emit
 
 import time
 
 
-import time
 
 
 ''' Goal: Live stream
@@ -28,6 +25,8 @@ import time
 
     make a communication pipe and as simulator runs send data in chunks
 
+    
+PLAN 1:
     Things to Use (Research):
 
     1. Websocket: 
@@ -41,6 +40,41 @@ import time
     3. Use eventlet to handle non-blocking (asynch confuses me so honestly want to avoid)
 
     Reference Library: https://flask-socketio.readthedocs.io/en/latest/getting_started.html
+
+Roadblock: Socket-io.client not compitable with vite version
+
+PLAN 2: 
+
+    Server side events: allows the server to keep the HTTP connection open and push data changes to the client
+
+    1. Use generator functions (yield instead of return or print)
+
+    Example:
+
+        @route("/stream")
+        def stream():
+            def eventStream():
+                while True:
+                    # Poll data from the database
+                    # and see if there's a new message
+                    if len(messages) > len(previous_messages):
+                        yield "data: 
+                            {}\n\n".format(messages[len(messages)-1)])"
+            
+            return Response(eventStream(), mimetype="text/event-stream")
+
+        hypothetical event source that checks if there’s a new inbox message and yield the new message
+
+    STEPS:
+
+        Replace the blocking POST route with a new GET endpoint
+        returns a streaming response with the proper SSE content type.
+    
+        Inside that route, create a generator that instantiates your simulation and then
+        in a loop, yields each simulation cycle as an SSE event 
+
+        format: "data: <any_data>\n\n"
+
 '''
 class Base(DeclarativeBase):
     pass
@@ -57,9 +91,7 @@ db.init_app(app)
 
 logging.basicConfig(level=logging.INFO)
 
-# MC: Socket io initialize
 
-socketIO = SocketIO(app, logger="True", engineio_logger=True, cors_allowed_origins= "*")
 
 ############################## Database Models ##############################
 
@@ -72,7 +104,6 @@ class Simulation(db.Model):
 with app.app_context():
     db.create_all()
 
-
 ############################## API Endpoints ##############################
 
 
@@ -82,12 +113,47 @@ def health():
 
 
 
+
 @app.get("/simulation")
 def get_data():
     # Get most recent simulation from database
     simulation: Simulation = Simulation.query.order_by(Simulation.id.desc()).first()
     return simulation.data if simulation else []
 
+
+# Replace the blocking POST route with a new GET endpoint
+#         returns a streaming response with the proper SSE content type.
+    
+#         Inside that route, create a generator that instantiates your simulation and then
+#         in a loop, yields each simulation cycle as an SSE event 
+
+#         format: "data: <any_data>\n\n"
+
+@app.get("/simulation/stream")
+def stream_simulation():
+    # init = {
+    #     "Body1": {"x": 0, "y": 0.1, "vx": 0.1, "vy": 0},
+    #     "Body2": {"x": 0, "y": 1, "vx": 1, "vy": 0},
+    # }
+
+    # Define time and timeStep for each agent
+    init: dict = request.json
+    for key in init.keys():
+        init[key]["time"] = 0
+        init[key]["timeStep"] = 0.01
+
+    # Create store and simulator
+    t = datetime.now()
+    store = QRangeStore()
+    simulator = Simulator(store=store, init=init)
+    logging.info(f"Time to Build: {datetime.now() - t}")
+
+    def event_stream():
+        for cycle in simulator.simulate(500):
+
+            yield f"data: {json.dumps(cycle)}\n\n"
+
+        return Response(stream_with_context(event_stream()), mimetype="text/event_stream")
 
 @app.post("/simulation")
 def simulate():
@@ -122,51 +188,7 @@ def simulate():
     # ME: returns simulation data to client 
     return store.store
 
-# @app.route("/simulation-sse", methods=["GET"])
-# def simulation_sse():
-#     """
-#     SSE endpoint for live simulation updates.
-#     Since EventSource sends GET requests, we use default initial conditions.
-#     (If you need dynamic conditions, consider using query parameters or a two-step approach.)
-#     """
-#     # Default initial conditions.
-#     init = {
-#         "Body1": {
-#             "time": 0,
-#             "timeStep": 0.01,
-#             "mass": 1,
-#             "position": {"x": -1, "y": 0, "z": 0},
-#             "velocity": {"x": 0, "y": 0.2, "z": 0}
-#         },
-#         "Body2": {
-#             "time": 0,
-#             "timeStep": 0.01,
-#             "mass": 1,
-#             "position": {"x": 1, "y": 0, "z": 0},
-#             "velocity": {"x": 0, "y": -0.2, "z": 0}
-#         }
-#     }
 
-#     store = QRangeStore()
-#     simulator = Simulator(store=store, init=init)
-
-#     def generate():
-#         iterations = 500  # Adjust the number of iterations as needed.
-#         for _ in range(iterations):
-#             for agentId in simulator.init:
-#                 t = simulator.times[agentId]
-#                 universe = simulator.read(t - 0.001)
-#                 if set(universe) == set(simulator.init):
-#                     newState = simulator.step(agentId, universe)
-#                     simulator.store[t, newState[agentId]["time"]] = newState
-#                     simulator.times[agentId] = newState[agentId]["time"]
-#                     # Yield the update as an SSE event.
-#                     yield f"data: {json.dumps(newState)}\n\n"
-#             time.sleep(0.1)
-#         # Final event to indicate simulation is finished.
-#         yield f"data: {json.dumps({'message': 'Simulation finished'})}\n\n"
-
-#     return Response(stream_with_context(generate()), mimetype="text/event-stream")
 
 
 ############################## Running the Server ##############################
@@ -174,65 +196,3 @@ def simulate():
 if __name__ == '__main__':
     app.run(port=8000)
 
-# #MC: Server side event handler for simulation data 
-
-# def ack():
-#     print('message was received!!')
-# '''
-
-# Tip: use (emit) for named event
-
-# HIGH LEVEL STEPS:
-
-#     1. listens for event from client
-
-#     2. initialize simulation
-
-#     3. Run simulation - use simulate method
-
-#     4. emit updated simulation data to frontend/client side
-
-#     5. when simulation done send finito message to client side
-
-#     6. error handling - if client disconnects stop simulaiton
-# '''
-
-# # 1
-# @socketIO.on('client_simulation_start')
-# def handle_simulation_data(init):
-
-#     print("Received client_simulation_start event with init:", init)
-
-#     #2 Initialize simulation
-#     for key in init.keys():
-#         init[key]["time"] = 0
-#         init[key]["timeStep"] = 0.01
-
-#     store = QRangeStore()
-#     simulator = Simulator(store=store, init=init)
-    
-#     #3 Run simulation (copy simulator method but replace self with simulator)
-#     iterations = 500 
-#     for _ in range(iterations):
-#             for agentId in simulator.init:
-#                 t = simulator.times[agentId]
-#                 universe = simulator.read(t - 0.001)
-#                 if set(universe) == set(simulator.init):
-
-#                     newState = simulator.step(agentId, universe)
-#                     simulator.store[t, newState[agentId]["time"]] = newState
-#                     simulator.times[agentId] = newState[agentId]["time"]
-    
-#                     #4 For each agent emit
-#                     emit('simulation_response', {agentId: newState})
-#             time.sleep(0.1)
-
-#     emit('simulation_complete', {'message': 'Simulation finished'})
-    
-
-
-
-# ### Actually Running the Server ###
-
-# if __name__ == '__main__':
-#     socketIO.run(app, port=8000)
