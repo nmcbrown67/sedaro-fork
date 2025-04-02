@@ -167,7 +167,7 @@ def stream_simulation():
         # Define time and timeStep for each agent
         for key in init.keys():
             init[key]["time"] = 0
-            init[key]["timeStep"] = 0.1  # Increased from 0.01 to 0.1 for faster simulation
+            init[key]["timeStep"] = 0.1  
 
         # Create store and simulator
         t = datetime.now()
@@ -177,29 +177,33 @@ def stream_simulation():
 
         def event_stream():
             try:
-                # Send an initial heartbeat
+                # Initial heartbeat
                 yield f"data: {json.dumps({'heartbeat': True})}\n\n"
                 
-                # Get speed parameter (higher = faster simulation)
+                # Speed parameter (higher = faster simulation)
                 speed = float(request.args.get("speed", 1.0))
                 
                 for i, cycle in enumerate(simulator.simulate(iterations=500)):
                     try:
-                        logging.info(f"Sending cycle {i}: {cycle}")
+                        if not cycle:  # Skip empty cycles
+                            continue
+                            
+                        # Send simulation data
                         yield f"data: {json.dumps(cycle)}\n\n"
                         
-                        # Send a heartbeat every 10 cycles to keep the connection alive
-                        if i % 10 == 0:
+                        # Send heartbeat every 10 cycles
+                        if i > 0 and i % 10 == 0:
                             yield f"data: {json.dumps({'heartbeat': True})}\n\n"
                             
-                        # Faster simulation with minimal delay
-                        time.sleep(max(0.01, 0.05 / speed))  # Reduced minimum delay and added speed control
+                        # Control simulation speed
+                        time.sleep(max(0.01, 0.05 / speed))
+                        
                     except Exception as e:
                         logging.error(f"Error in cycle {i}: {str(e)}")
                         yield f"data: {json.dumps({'error': str(e)})}\n\n"
                         continue
-                        
-                # Send a final message to indicate completion
+                
+                # Final completion message
                 yield f"data: {json.dumps({'complete': True})}\n\n"
                 
             except Exception as e:
@@ -218,6 +222,8 @@ def stream_simulation():
                 "Content-Type": "text/event-stream"
             }
         )
+    
+    #Error handling
     except Exception as e:
         logging.error(f"Error in stream_simulation: {str(e)}")
         return Response(

@@ -158,35 +158,49 @@ class Simulator:
     #MC: Changed simulate function to work in yielding agent/state data in cycles instead of all at onces
     def simulate(self, iterations: int = 500):
         """Simulate the universe for a given number of iterations."""
-        for _ in range(iterations):
+        for iteration in range(iterations):
             cycle = dict()  # Reset cycle data for each iteration
+            logging.info(f"Starting iteration {iteration}")
+            
             for agentId in self.init:
                 t = self.times[agentId]
                 universe = self.read(t - 0.001)
                 if set(universe) == set(self.init):
                     newState = self.step(agentId, universe)
-                    logging.info(f"New state for {agentId}: {newState}")
+                    logging.info(f"Raw state for {agentId} at time {t}: {newState}")
+                    
+                    if not newState or agentId not in newState:
+                        logging.error(f"Invalid state for {agentId}: {newState}")
+                        continue
+                        
                     self.store[t, newState[agentId]["time"]] = newState
                     self.times[agentId] = newState[agentId]["time"]
 
                     # Transform the state to match frontend's expected format
+                    # The position and velocity are nested objects in the state
+                    position = newState[agentId].get("position")
+                    velocity = newState[agentId].get("velocity")
+                    
+                    if not position or not velocity:
+                        logging.error(f"Missing position or velocity for {agentId}: pos={position}, vel={velocity}")
+                        continue
+                        
                     cycle[agentId] = {
-                        "position": newState[agentId].get("position", {"x": 0, "y": 0, "z": 0}),
-                        "velocity": newState[agentId].get("velocity", {"x": 0, "y": 0, "z": 0})
+                        "position": position,
+                        "velocity": velocity
                     }
                     
-                    # Log the transformed data for this agent
-                    logging.info(f"Transformed state for {agentId}: {cycle[agentId]}")
-                    
-                    # Verify position and velocity data are properly formatted
-                    pos = cycle[agentId]["position"]
-                    vel = cycle[agentId]["velocity"]
-                    if not all(isinstance(pos.get(k), (int, float)) for k in ["x", "y", "z"]):
-                        logging.error(f"Invalid position data for {agentId}: {pos}")
-                    if not all(isinstance(vel.get(k), (int, float)) for k in ["x", "y", "z"]):
-                        logging.error(f"Invalid velocity data for {agentId}: {vel}")
-                        
-            logging.info(f"Yielding cycle: {cycle}")
-            yield cycle
+                    # Verify the data structure
+                    logging.info(f"Processed data for {agentId}:")
+                    logging.info(f"  Position: x={position['x']}, y={position['y']}, z={position['z']}")
+                    logging.info(f"  Velocity: x={velocity['x']}, y={velocity['y']}, z={velocity['z']}")
+                else:
+                    logging.error(f"Universe state mismatch. Expected: {set(self.init)}, Got: {set(universe)}")
+            
+            if not cycle:
+                logging.error("No data in cycle!")
+            else:
+                logging.info(f"Yielding cycle with {len(cycle)} agents: {list(cycle.keys())}")
+                yield cycle
 
             

@@ -1,5 +1,5 @@
 import { Flex, Heading, Separator, Table } from '@radix-ui/themes';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Plot from 'react-plotly.js';
 import { Link } from 'react-router-dom';
 import { Routes } from 'routes';
@@ -59,206 +59,220 @@ const App = () => {
 
 
   useEffect(() => {
-    // Create an EventSource that connects to the SSE endpoint.
     const apiUrl = window.location.hostname === 'localhost' 
       ? 'http://localhost:8000' 
       : `http://${window.location.hostname}:8000`;
-    
-    const searchParams = new URLSearchParams(window.location.search);
-    const eventSourceUrl = `${apiUrl}/simulation/stream?${searchParams.toString()}`;
-    console.log('Connecting to SSE endpoint:', eventSourceUrl);
-    
-    let eventSource: EventSource | null = null;
-    let reconnectTimeout: number | null = null;
-    
-    const connectEventSource = () => {
-      if (eventSource) {
-        eventSource.close();
-      }
-      
-      console.log('Creating new EventSource with URL:', eventSourceUrl);
-      eventSource = new EventSource(eventSourceUrl);
-      
-      eventSource.onopen = () => {
-        console.log('SSE connection opened');
-      };
-      
-      eventSource.onmessage = (event) => {
-        try {
-          // Each message is a simulation frame (an object keyed by agentId)
-          const data = JSON.parse(event.data);
-          console.log('Received data:', data);
-          
-          // Handle heartbeat messages
-          if (data.heartbeat) {
-            console.log('Received heartbeat');
+    const eventSource = new EventSource(`${apiUrl}/simulation/stream${window.location.search}`);
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log("Received SSE data:", data);
+
+        // Handle special messages
+        if (data.heartbeat) {
+          console.log("Received heartbeat");
+          return;
+        }
+
+        if (data.complete) {
+          console.log("Simulation complete");
+          eventSource.close();
+          return;
+        }
+
+        if (data.error) {
+          console.error("Server error:", data.error);
+          return;
+        }
+
+        // Process simulation data
+        Object.entries(data).forEach(([agentId, state]: [string, any]) => {
+          const pos = state.position;
+          const vel = state.velocity;
+
+          console.log(`Processing data for ${agentId}:`, {
+            position: pos,
+            velocity: vel
+          });
+
+          if (!pos || !vel) {
+            console.error(`Missing position or velocity data for ${agentId}`);
             return;
           }
-          
-          // Handle completion message
-          if (data.complete) {
-            console.log('Simulation complete');
-            if (eventSource) {
-              eventSource.close();
+
+          setPositionData(prev => {
+            const newData = { ...prev };
+            if (!newData[agentId]) {
+              newData[agentId] = {
+                x: [] as number[],
+                y: [] as number[],
+                z: [] as number[],
+                type: 'scatter3d' as const,
+                mode: 'lines+markers' as const,
+                marker: { size: 5 },
+                line: { width: 2 },
+                name: `${agentId} Position`
+              };
             }
-            return;
-          }
-          
-          // Check for error message from server
-          if (data.error) {
-            console.error('Server error:', data.error);
-            return;
-          }
-          
-          // Process simulation frame (object keyed by agentId)
-          const frame: SimulationFrame = data;
-          console.log('Processing frame:', frame);
+
+            // Verify the data is numeric
+            if (typeof pos.x !== 'number' || typeof pos.y !== 'number' || typeof pos.z !== 'number') {
+              console.error(`Invalid position data for ${agentId}:`, pos);
+              return prev;
+            }
+
+            newData[agentId].x.push(pos.x);
+            newData[agentId].y.push(pos.y);
+            newData[agentId].z.push(pos.z);
+
+            console.log(`Updated position data for ${agentId}:`, {
+              x: newData[agentId].x.slice(-1),
+              y: newData[agentId].y.slice(-1),
+              z: newData[agentId].z.slice(-1)
+            });
+
+            return newData;
+          });
+
+          setVelocityData(prev => {
+            const newData = { ...prev };
+            if (!newData[agentId]) {
+              newData[agentId] = {
+                x: [] as number[],
+                y: [] as number[],
+                z: [] as number[],
+                type: 'scatter3d' as const,
+                mode: 'lines+markers' as const,
+                marker: { size: 5 },
+                line: { width: 2 },
+                name: `${agentId} Velocity`
+              };
+            }
+
+            // Verify the data is numeric
+            if (typeof vel.x !== 'number' || typeof vel.y !== 'number' || typeof vel.z !== 'number') {
+              console.error(`Invalid velocity data for ${agentId}:`, vel);
+              return prev;
+            }
+
+            newData[agentId].x.push(vel.x);
+            newData[agentId].y.push(vel.y);
+            newData[agentId].z.push(vel.z);
+
+            console.log(`Updated velocity data for ${agentId}:`, {
+              x: newData[agentId].x.slice(-1),
+              y: newData[agentId].y.slice(-1),
+              z: newData[agentId].z.slice(-1)
+            });
+
+            return newData;
+          });
 
           // Update initial state if not already set
-          setInitialState((prev) => {
-            // Only update if empty
+          setInitialState(prev => {
             if (Object.keys(prev).length === 0) {
-              return frame;
+              return { [agentId]: { position: pos, velocity: vel } };
             }
             return prev;
           });
-
-          // Update plotting data by appending new positions and velocities.
-          setPositionData((prevData) => {
-            const newData = { ...prevData };
-            let updated = false;
-            
-            Object.entries(frame).forEach(([agentId, state]) => {
-              if (!state.position) {
-                console.error(`Missing position data for ${agentId}:`, state);
-                return;
-              }
-              
-              if (!newData[agentId]) {
-                newData[agentId] = baseData();
-                newData[agentId].name = agentId;
-                updated = true;
-              }
-              
-              // Verify the data is accessible and valid
-              if (typeof state.position.x === 'number' && 
-                  typeof state.position.y === 'number' && 
-                  typeof state.position.z === 'number') {
-                console.log(`Adding position for ${agentId}:`, state.position);
-                
-                newData[agentId].x.push(state.position.x);
-                newData[agentId].y.push(state.position.y);
-                newData[agentId].z.push(state.position.z);
-                updated = true;
-              } else {
-                console.error(`Invalid position data for ${agentId}:`, state.position);
-              }
-            });
-            
-            console.log('Updated position data:', newData);
-            return updated ? newData : prevData;
-          });
-
-          setVelocityData((prevData) => {
-            const newData = { ...prevData };
-            let updated = false;
-            
-            Object.entries(frame).forEach(([agentId, state]) => {
-              if (!state.velocity) {
-                console.error(`Missing velocity data for ${agentId}:`, state);
-                return;
-              }
-              
-              if (!newData[agentId]) {
-                newData[agentId] = baseData();
-                newData[agentId].name = agentId;
-                updated = true;
-              }
-              
-              // Verify the data is accessible and valid
-              if (typeof state.velocity.x === 'number' && 
-                  typeof state.velocity.y === 'number' && 
-                  typeof state.velocity.z === 'number') {
-                console.log(`Adding velocity for ${agentId}:`, state.velocity);
-                
-                newData[agentId].x.push(state.velocity.x);
-                newData[agentId].y.push(state.velocity.y);
-                newData[agentId].z.push(state.velocity.z);
-                updated = true;
-              } else {
-                console.error(`Invalid velocity data for ${agentId}:`, state.velocity);
-              }
-            });
-            
-            console.log('Updated velocity data:', newData);
-            return updated ? newData : prevData;
-          });
-        } catch (error) {
-          console.error('Error processing simulation data:', error);
-          console.error('Raw event data:', event.data);
-        }
-      };
-      
-      eventSource.onerror = (err) => {
-        console.error('SSE error:', err);
-        console.error('EventSource readyState:', eventSource?.readyState);
-        
-        if (eventSource) {
-          eventSource.close();
-          eventSource = null;
-        }
-        
-        // Try to reconnect after a short delay
-        if (reconnectTimeout) {
-          clearTimeout(reconnectTimeout);
-        }
-        
-        reconnectTimeout = window.setTimeout(() => {
-          console.log('Attempting to reconnect...');
-          connectEventSource();
-        }, 2000);
-      };
+        });
+      } catch (error) {
+        console.error("Error processing SSE message:", error, event.data);
+      }
     };
-    
-    // Initial connection
-    connectEventSource();
-    
-    // Cleanup on unmount
+
+    eventSource.onerror = (error) => {
+      console.error("EventSource error:", error);
+    };
+
     return () => {
-      console.log('Cleaning up EventSource connection');
-      if (eventSource) {
-        eventSource.close();
-      }
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
-      }
+      eventSource.close();
     };
   }, []);
 
-// Convert the plotted data objects to arrays for Plotly.
-const positionPlots = Object.values(positionData);
-const velocityPlots = Object.values(velocityData);
+  // Create plot data
+  const plotData = useMemo(() => {
+    console.log("Creating plot data with:", {
+      positionData: Object.fromEntries(
+        Object.entries(positionData).map(([k, v]) => [k, {
+          x: v.x.slice(-1),
+          y: v.y.slice(-1),
+          z: v.z.slice(-1)
+        }])
+      ),
+      velocityData: Object.fromEntries(
+        Object.entries(velocityData).map(([k, v]) => [k, {
+          x: v.x.slice(-1),
+          y: v.y.slice(-1),
+          z: v.z.slice(-1)
+        }])
+      )
+    });
 
-// Assign different colors to different bodies
-if (positionPlots.length > 0 && positionPlots[0]) {
-  positionPlots[0].marker = { size: 6, color: 'red' };
-  positionPlots[0].line = { width: 3, color: 'red' };
-}
-if (positionPlots.length > 1 && positionPlots[1]) {
-  positionPlots[1].marker = { size: 6, color: 'blue' };
-  positionPlots[1].line = { width: 3, color: 'blue' };
-}
-if (velocityPlots.length > 0 && velocityPlots[0]) {
-  velocityPlots[0].marker = { size: 6, color: 'red' };
-  velocityPlots[0].line = { width: 3, color: 'red' };
-}
-if (velocityPlots.length > 1 && velocityPlots[1]) {
-  velocityPlots[1].marker = { size: 6, color: 'blue' };
-  velocityPlots[1].line = { width: 3, color: 'blue' };
-}
+    const data: any[] = [];
 
-console.log('Current position plots:', positionPlots);
-console.log('Current velocity plots:', velocityPlots);
+    Object.entries(positionData).forEach(([agentId, pos], index) => {
+      const vel = velocityData[agentId];
+      if (!vel) {
+        console.warn(`No velocity data for ${agentId}`);
+        return;
+      }
+
+      // Position plot
+      data.push({
+        ...pos,
+        marker: {
+          ...pos.marker,
+          color: index === 0 ? 'red' : 'blue',
+        },
+        line: {
+          ...pos.line,
+          color: index === 0 ? 'red' : 'blue',
+        },
+      });
+
+      // Velocity plot
+      data.push({
+        ...vel,
+        marker: {
+          ...vel.marker,
+          color: index === 0 ? 'orange' : 'green',
+        },
+        line: {
+          ...vel.line,
+          color: index === 0 ? 'orange' : 'green',
+        },
+      });
+    });
+
+    return data;
+  }, [positionData, velocityData]);
+
+  // Convert the plotted data objects to arrays for Plotly.
+  const positionPlots = Object.values(positionData);
+  const velocityPlots = Object.values(velocityData);
+
+  // Assign different colors to different bodies
+  if (positionPlots.length > 0 && positionPlots[0]) {
+    positionPlots[0].marker = { size: 6, color: 'red' };
+    positionPlots[0].line = { width: 3, color: 'red' };
+  }
+  if (positionPlots.length > 1 && positionPlots[1]) {
+    positionPlots[1].marker = { size: 6, color: 'blue' };
+    positionPlots[1].line = { width: 3, color: 'blue' };
+  }
+  if (velocityPlots.length > 0 && velocityPlots[0]) {
+    velocityPlots[0].marker = { size: 6, color: 'red' };
+    velocityPlots[0].line = { width: 3, color: 'red' };
+  }
+  if (velocityPlots.length > 1 && velocityPlots[1]) {
+    velocityPlots[1].marker = { size: 6, color: 'blue' };
+    velocityPlots[1].line = { width: 3, color: 'blue' };
+  }
+
+  console.log('Current position plots:', positionPlots);
+  console.log('Current velocity plots:', velocityPlots);
   return (
     
     <div

@@ -56,6 +56,7 @@ Query syntax:
 '''''HAVE TO EDIT THIS FOR GRAVITY'''
 
 # def propagate_velocity(time_step, position, velocity, other_position, m_other):
+#MC: Changed body1 w query_tutorial info 
 agents = {
     'Body1': [
         {
