@@ -2,9 +2,8 @@ flask~=3.0
 flask-cors~=5.0.0
 Flask-SQLAlchemy~=3.0
 numpy~=2.1.2
-flask-socketio
+python-dotenv~=1.0.0
+gunicorn~=21.2.0
 
-# event-let
 
-# pip install flask flask-socketio eventlet
 

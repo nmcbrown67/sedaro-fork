@@ -38,36 +38,26 @@ const App = () => {
     position: Record<string, { x: number[], y: number[], z: number[] }>;
     velocity: Record<string, { x: number[], y: number[], z: number[] }>;
   }>({
-    position: {},
-    velocity: {}
+    position: {
+      Body1: { x: [], y: [], z: [] },
+      Body2: { x: [], y: [], z: [] }
+    },
+    velocity: {
+      Body1: { x: [], y: [], z: [] },
+      Body2: { x: [], y: [], z: [] }
+    }
   });
 
   
 
   useEffect(() => {
-
-    // MC: Get rid of fetch event source set up
     let eventSource: EventSource | null = null;
     let canceled = false;
 
     async function setupEventSource() {
       try {
 
-
-        // example code to start: 
-          /* const eventSource = new EventSource('/stream');
-
-        eventSource.onmessage = (event) => {
-          console.log('Received event:', event.data);
-          // Update the UI with the new data
-        };
-
-          eventSource.onerror = (error) => {
-            console.error('Error:', error);
-            eventSource.close();
-  };
-*/
-        // Using url instead of /stream look at webscraper proj for reference 
+        // MC: Get rid of fetch event source set up
         const params = new URLSearchParams(window.location.search);
         const url = `http://localhost:8000/simulation/stream?${params.toString()}`;
         
@@ -76,9 +66,11 @@ const App = () => {
         eventSource.onmessage = (event) => {
           if (canceled) return;
           
+
+          // Consoling data to catch errors
           const data = JSON.parse(event.data);
+          console.log('Received raw data:', data);
           
-          // Logging bc so many update errors 
           if (data.heartbeat) {
             console.log('Heartbeat received');
             return;
@@ -98,75 +90,103 @@ const App = () => {
           // Update current data for the table
           setCurrentData(data);
 
-          // Update plot history
-          setPlotHistory(prevHistory => {
-            const newHistory = {
-              position: { ...prevHistory.position },
-              velocity: { ...prevHistory.velocity }
-            };
+          // Create new history data
+          const newHistory = {
+            position: { ...plotHistory.position },
+            velocity: { ...plotHistory.velocity }
+          };
 
-            for (const [agentId, val] of Object.entries(data)) {
-              if (agentId === "time" || agentId === "timeStep") continue;
-              
-              const { position, velocity } = val as any;
-              
-              // Initialize arrays if they don't exist
-              if (!newHistory.position[agentId]) {
-                newHistory.position[agentId] = { x: [], y: [], z: [] };
-                newHistory.velocity[agentId] = { x: [], y: [], z: [] };
-              }
-              
-              // Append new values
-              newHistory.position[agentId].x.push(position.x);
-              newHistory.position[agentId].y.push(position.y);
-              newHistory.position[agentId].z.push(position.z);
-              
-              newHistory.velocity[agentId].x.push(velocity.x);
-              newHistory.velocity[agentId].y.push(velocity.y);
-              newHistory.velocity[agentId].z.push(velocity.z);
-            }
+          // Process incoming data
+          for (const [agentId, val] of Object.entries(data)) {
+            if (agentId === "time" || agentId === "timeStep") continue;
             
-            return newHistory;
-          });
+            const { position, velocity } = val as any;
+            console.log(`Processing ${agentId}:`, { position, velocity });
+            
+            // Append new values
+            newHistory.position[agentId].x.push(position.x);
+            newHistory.position[agentId].y.push(position.y);
+            newHistory.position[agentId].z.push(position.z);
+            
+            newHistory.velocity[agentId].x.push(velocity.x);
+            newHistory.velocity[agentId].y.push(velocity.y);
+            newHistory.velocity[agentId].z.push(velocity.z);
+          }
+          
+          console.log('Updated history:', newHistory);
+          setPlotHistory(newHistory);
 
           // Process simulation data for plots
           const updatedPositionData: PlottedFrame = {};
           const updatedVelocityData: PlottedFrame = {};
 
           const baseData = () => ({
-            type: 'scatter3d',
-            mode: 'lines+markers',
+            type: 'scatter3d' as const,
+            mode: 'lines+markers' as const,
             marker: { size: 4 },
             line: { width: 2 },
           });
 
-          // Convert history to plot data format
-          for (const [agentId, data] of Object.entries(plotHistory.position)) {
-            updatedPositionData[agentId] = {
-              ...baseData(),
-              x: data.x,
-              y: data.y,
-              z: data.z,
-              name: agentId,
-              type: 'scatter3d' as const,
-              mode: 'lines+markers' as const
-            };
+          // Convert history to plot data format using the new history data
+          for (const [agentId, data] of Object.entries(newHistory.position)) {
+            console.log(`Creating position plot data for ${agentId}:`, data);
+            if (data.x.length > 0) {  // Only add if we have data
+              const trace = {
+                ...baseData(),
+                x: [...data.x],  // Create a new array to ensure proper data structure
+                y: [...data.y],
+                z: [...data.z],
+                name: agentId,
+                line: {
+                  width: 2,
+                  color: agentId === 'Body1' ? '#1f77b4' : '#ff7f0e'
+                },
+                marker: {
+                  size: 4,
+                  color: agentId === 'Body1' ? '#1f77b4' : '#ff7f0e'
+                }
+              };
+              console.log(`Created position trace for ${agentId}:`, trace);
+              updatedPositionData[agentId] = trace;
+            }
           }
 
-          for (const [agentId, data] of Object.entries(plotHistory.velocity)) {
-            updatedVelocityData[agentId] = {
-              ...baseData(),
-              x: data.x,
-              y: data.y,
-              z: data.z,
-              name: agentId,
-              type: 'scatter3d' as const,
-              mode: 'lines+markers' as const
-            };
+          for (const [agentId, data] of Object.entries(newHistory.velocity)) {
+            console.log(`Creating velocity plot data for ${agentId}:`, data);
+            if (data.x.length > 0) {  // Only add if we have data
+              const trace = {
+                ...baseData(),
+                x: [...data.x],  // Create a new array to ensure proper data structure
+                y: [...data.y],
+                z: [...data.z],
+                name: agentId,
+                line: {
+                  width: 2,
+                  color: agentId === 'Body1' ? '#1f77b4' : '#ff7f0e'
+                },
+                marker: {
+                  size: 4,
+                  color: agentId === 'Body1' ? '#1f77b4' : '#ff7f0e'
+                }
+              };
+              console.log(`Created velocity trace for ${agentId}:`, trace);
+              updatedVelocityData[agentId] = trace;
+            }
           }
 
-          setPositionData(Object.values(updatedPositionData));
-          setVelocityData(Object.values(updatedVelocityData));
+          const positionDataArray = Object.values(updatedPositionData);
+          const velocityDataArray = Object.values(updatedVelocityData);
+          
+          console.log('Final position data for plot:', JSON.stringify(positionDataArray, null, 2));
+          console.log('Final velocity data for plot:', JSON.stringify(velocityDataArray, null, 2));
+
+          // Only update if we have data
+          if (positionDataArray.length > 0) {
+            setPositionData(positionDataArray);
+          }
+          if (velocityDataArray.length > 0) {
+            setVelocityData(velocityDataArray);
+          }
         };
 
         eventSource.onerror = (error) => {
@@ -269,40 +289,92 @@ const App = () => {
         </Flex>
         <Flex direction="row" width="100%" justify="center">
           <Plot
-            style={{ width: '45%', height: '100%', margin: '5px' }}
+            style={{ width: '45%', height: '400px', margin: '5px' }}
             data={positionData}
             layout={{
               title: 'Position',
               scene: {
-                xaxis: { title: 'X' },
-                yaxis: { title: 'Y' },
-                zaxis: { title: 'Z' },
+                xaxis: { 
+                  title: 'X',
+                  range: [-100, 100]
+                },
+                yaxis: { 
+                  title: 'Y',
+                  range: [-100, 100]
+                },
+                zaxis: { 
+                  title: 'Z',
+                  range: [-100, 100]
+                },
+                camera: {
+                  eye: { x: 1.5, y: 1.5, z: 1.5 },
+                  center: { x: 0, y: 0, z: 0 },
+                  up: { x: 0, y: 0, z: 1 }
+                }
               },
               autosize: true,
               dragmode: 'turntable',
+              showlegend: true,
+              legend: {
+                orientation: 'h',
+                yanchor: 'bottom',
+                y: 1.02,
+                xanchor: 'right',
+                x: 1
+              }
             }}
             useResizeHandler
             config={{
               scrollZoom: true,
+              displayModeBar: true
             }}
+            onError={(err) => console.error('Position plot error:', err)}
+            onInitialized={() => console.log('Position plot initialized with data:', positionData)}
+            onUpdate={(figure) => console.log('Position plot updated with data:', figure)}
           />
           <Plot
-            style={{ width: '45%', height: '100%', margin: '5px' }}
+            style={{ width: '45%', height: '400px', margin: '5px' }}
             data={velocityData}
             layout={{
               title: 'Velocity',
               scene: {
-                xaxis: { title: 'X' },
-                yaxis: { title: 'Y' },
-                zaxis: { title: 'Z' },
+                xaxis: { 
+                  title: 'X',
+                  range: [-10, 10]
+                },
+                yaxis: { 
+                  title: 'Y',
+                  range: [-10, 10]
+                },
+                zaxis: { 
+                  title: 'Z',
+                  range: [-10, 10]
+                },
+                camera: {
+                  eye: { x: 1.5, y: 1.5, z: 1.5 },
+                  center: { x: 0, y: 0, z: 0 },
+                  up: { x: 0, y: 0, z: 1 }
+                }
               },
               autosize: true,
               dragmode: 'turntable',
+              showlegend: true,
+              legend: {
+                orientation: 'h',
+                yanchor: 'bottom',
+                y: 1.02,
+                xanchor: 'right',
+                x: 1
+              }
             }}
             useResizeHandler
             config={{
               scrollZoom: true,
+              displayModeBar: true
             }}
+            onError={(err) => console.error('Velocity plot error:', err)}
+            onInitialized={() => console.log('Velocity plot initialized with data:', velocityData)}
+            onUpdate={(figure) => console.log('Velocity plot updated with data:', figure)}
           />
         </Flex>
         {/* <Flex justify="center" width="100%" m="4">
