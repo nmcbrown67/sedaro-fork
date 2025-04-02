@@ -1,0 +1,68 @@
+﻿
+Sedaro Nano Writeup
+
+
+Live Streaming Simulation:
+simulator.py:
+        The simulate method is now implemented as a generator rather than returning all data at once. This change makes it possible to stream simulation updates continuously to the client. 
+Steps:
+1. I create a dictionary called cycle at the start of each iteration.
+
+2. For every agent, I fetch its current state, process the new position and velocity, and then store these values in the cycle dictionary using the agent’s ID as the key.
+
+3. After processing all agents for that iteration, the function uses yield cycle to return the updated dictionary, allowing live updates each time the loop runs.
+
+This approach facilitates real-time simulation data streaming, as the client can consume each newly yielded cycle of agent states continuously rather than waiting for the entire simulation to finish.
+app.py:
+        In app.py, I replace the original blocking POST route with a new GET endpoint, /simulation/stream, to implement Server-Side Events (SSE). Unlike websockets or traditional HTTP requests, SSE allows the server to keep the connection open and continuously push data to the client as soon as it becomes available. Here’s how the endpoint works:
+   1. Defined Initial Conditions: I retrieve agent properties (position, velocity, mass, etc.) from the request’s query parameters, then set up each agent’s time and time step.
+
+   2. Instantiate Simulator: Using the provided initial conditions, I created a QRangeStore and passed it to our Simulator.
+
+   3. Implement Event Stream:
+
+      * I declare an internal generator function, event_stream(), that calls the Simulator’s simulate method in a loop.
+
+      * For each simulation cycle, it converts the results to JSON and yields them to the client via SSE.
+
+      * A “heartbeat” is sent every 10 cycles to keep the connection alive in case no state changes occur for an extended period.
+
+         4. Send Response:
+
+            * The new GET route /simulation/stream returns a Response whose body is this event stream.
+
+This SSE-based approach resolves the compatibility issues I faced when trying to use the communication library, Socket.io, and ensures the front end can continuously receive real-time simulation updates without needing to poll or refresh the entire simulation state each time.
+
+
+App.txt
+In App.txt the simulation data is received in real time via SSE. This allows the client to establish a persistent connection with the server and automatically receive updates as soon as the server sends them. 
+Below are the key points of this implementation:
+               1. Establishing the Event Source
+
+                  * An EventSource is created in the useEffect hook, pointing to the server’s streaming endpoint (/simulation/stream).
+
+                  * Since SSE provides a unidirectional data flow from server to client, there is no need to manually poll or continuously request new data. As soon as the server yields a cycle, the client receives it in onmessage.
+
+                     2. Handling Server Messages
+
+                        * Each message from the server is parsed as JSON, and several checks are performed: whether it's a heartbeat, an error, or a complete message.
+
+                        * Heartbeat messages are used solely to keep the connection open. No data processing occurs for these events.
+
+                           3. Updating React State
+
+                              * Each valid data event represents a new “cycle” of simulation data for the agents. This data is merged into the plotHistory state object to accumulate the entire trajectory.
+
+                              * The table showing the current position and velocity of each agent is updated using the currentData state. This ensures that the UI reflects the most recent values in real time.
+
+                                 4. Plotting Real-Time Data
+
+                                    * After each new message, the 3D position (positionData) and 3D velocity (velocityData) plots are updated using Plotly.
+
+                                    * The updated arrays of x, y, and z values in plotHistory get mapped to Plotly “trace” objects. This produces a continuous, real-time trajectory that grows throughout the simulation.
+
+Overall, this approach allows for an interactive, continuous view of the simulation’s progression on the client side, displaying both numerical values in the table and in the real-time visualization of position and velocity.
+
+
+UI/UX Changes:
+        I additionally updated the background, fonts, text colors, and layout on the front-end side to create a more cohesive and visually appealing theme for the project.

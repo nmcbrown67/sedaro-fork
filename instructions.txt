@@ -1,0 +1,6 @@
+
+Open file
+Run ‘docker compose up - - build’
+This should download all required libraries through requirements.txt
+Open local host at: http://localhost:3030/simulation?Body1.position.x=-0.73&Body1.position.y=0.4&Body1.position.z=0.5&Body1.velocity.x=0.3&Body1.velocity.y=-0.0015&Body1.velocity.z=3&Body1.mass=1&Body2.position.x=60.34&Body2.position.y=0.3&Body2.position.z=0.8&Body2.velocity.x=-3&Body2.velocity.y=2&Body2.velocity.z=2&Body2.mass=0.0123
+Enter in desired parameters, click submit, done
