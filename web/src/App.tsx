@@ -1,278 +1,192 @@
 import { Flex, Heading, Separator, Table } from '@radix-ui/themes';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import Plot from 'react-plotly.js';
 import { Link } from 'react-router-dom';
 import { Routes } from 'routes';
+import { Data } from 'plotly.js';
 
 
-type AgentState = {
-  position: { x: number; y: number; z: number };
-  velocity: { x: number; y: number; z: number };
+// Input data from the simulation
+type AgentData = Record<string, Record<string, number>>;
+type DataFrame = Record<string, AgentData>;
+type DataPoint = [number, number, DataFrame];
+
+// Output data to the plot
+
+// Changed to have same fromat as base data
+type PlottedAgentData = Partial<Data> & {
+  x: number[];
+  y: number[];
+  z: number[];
+  type: 'scatter3d';
+  mode: 'lines+markers';
+  marker: { size: number };
+  line: { width: number };
+  name?: string;
 };
-
-type SimulationFrame = Record<string, AgentState>;
-
-type PlottedAgentData = {
-  [agentId: string]: {
-    x: number[];
-    y: number[];
-    z: number[];
-    type: 'scatter3d';
-    mode: 'lines+markers';
-    marker: { size: number; color?: string };
-    line: { width: number; color?: string };
-    name?: string;
-    hoverinfo?: 'all' | 'name' | 'none';
-  };
-};
-
-
-const baseData = () => {
-  return {
-    x: [] as number[],
-    y: [] as number[],
-    z: [] as number[],
-    type: 'scatter3d' as const,
-    mode: 'lines+markers' as const,
-    marker: { size: 5, color: 'red' },
-    line: { width: 3, color: 'orange' },
-    name: '',
-    hoverinfo: 'all' as const
-  };
-};
-
-
-// // Input data from the simulation
-// type AgentData = Record<string, Record<string, number>>;
-// type DataFrame = Record<string, AgentData>;
-// type DataPoint = [number, number, DataFrame];
-
-// // Output data to the plot
-// type PlottedAgentData = Record<string, number[]>;
-// type PlottedFrame = Record<string, PlottedAgentData>;
+type PlottedFrame = Record<string, PlottedAgentData>;
 
 const App = () => {
   // Store plot data in state.
-  const [positionData, setPositionData] = useState<PlottedAgentData>({});
-  const [velocityData, setVelocityData] = useState<PlottedAgentData>({});
-  const [initialState, setInitialState] = useState<SimulationFrame>({});
+  const [positionData, setPositionData] = useState<PlottedAgentData[]>([]);
+  const [velocityData, setVelocityData] = useState<PlottedAgentData[]>([]);
+  const [initialState, setInitialState] = useState<DataFrame>({});
 
+  // Storing current data and history so can update trajectory
+  const [currentData, setCurrentData] = useState<DataFrame>({});
+  const [plotHistory, setPlotHistory] = useState<{
+    position: Record<string, { x: number[], y: number[], z: number[] }>;
+    velocity: Record<string, { x: number[], y: number[], z: number[] }>;
+  }>({
+    position: {},
+    velocity: {}
+  });
+
+  
 
   useEffect(() => {
-    const apiUrl = window.location.hostname === 'localhost' 
-      ? 'http://localhost:8000' 
-      : `http://${window.location.hostname}:8000`;
-    const eventSource = new EventSource(`${apiUrl}/simulation/stream${window.location.search}`);
 
-    eventSource.onmessage = (event) => {
+    // MC: Get rid of fetch event source set up
+    let eventSource: EventSource | null = null;
+    let canceled = false;
+
+    async function setupEventSource() {
       try {
-        const data = JSON.parse(event.data);
-        console.log("Received SSE data:", data);
 
-        // Handle special messages
-        if (data.heartbeat) {
-          console.log("Received heartbeat");
-          return;
-        }
 
-        if (data.complete) {
-          console.log("Simulation complete");
-          eventSource.close();
-          return;
-        }
+        // example code to start: 
+          /* const eventSource = new EventSource('/stream');
 
-        if (data.error) {
-          console.error("Server error:", data.error);
-          return;
-        }
+        eventSource.onmessage = (event) => {
+          console.log('Received event:', event.data);
+          // Update the UI with the new data
+        };
 
-        // Process simulation data
-        Object.entries(data).forEach(([agentId, state]: [string, any]) => {
-          const pos = state.position;
-          const vel = state.velocity;
-
-          console.log(`Processing data for ${agentId}:`, {
-            position: pos,
-            velocity: vel
-          });
-
-          if (!pos || !vel) {
-            console.error(`Missing position or velocity data for ${agentId}`);
+          eventSource.onerror = (error) => {
+            console.error('Error:', error);
+            eventSource.close();
+  };
+*/
+        // Using url instead of /stream look at webscraper proj for reference 
+        const params = new URLSearchParams(window.location.search);
+        const url = `http://localhost:8000/simulation/stream?${params.toString()}`;
+        
+        eventSource = new EventSource(url);
+        
+        eventSource.onmessage = (event) => {
+          if (canceled) return;
+          
+          const data = JSON.parse(event.data);
+          
+          // Logging bc so many update errors 
+          if (data.heartbeat) {
+            console.log('Heartbeat received');
+            return;
+          }
+          
+          if (data.error) {
+            console.error('Error from server:', data.error);
+            return;
+          }
+          
+          if (data.complete) {
+            console.log('Simulation complete');
+            eventSource?.close();
             return;
           }
 
-          setPositionData(prev => {
-            const newData = { ...prev };
-            if (!newData[agentId]) {
-              newData[agentId] = {
-                x: [] as number[],
-                y: [] as number[],
-                z: [] as number[],
-                type: 'scatter3d' as const,
-                mode: 'lines+markers' as const,
-                marker: { size: 5 },
-                line: { width: 2 },
-                name: `${agentId} Position`
-              };
+          // Update current data for the table
+          setCurrentData(data);
+
+          // Update plot history
+          setPlotHistory(prevHistory => {
+            const newHistory = {
+              position: { ...prevHistory.position },
+              velocity: { ...prevHistory.velocity }
+            };
+
+            for (const [agentId, val] of Object.entries(data)) {
+              if (agentId === "time" || agentId === "timeStep") continue;
+              
+              const { position, velocity } = val as any;
+              
+              // Initialize arrays if they don't exist
+              if (!newHistory.position[agentId]) {
+                newHistory.position[agentId] = { x: [], y: [], z: [] };
+                newHistory.velocity[agentId] = { x: [], y: [], z: [] };
+              }
+              
+              // Append new values
+              newHistory.position[agentId].x.push(position.x);
+              newHistory.position[agentId].y.push(position.y);
+              newHistory.position[agentId].z.push(position.z);
+              
+              newHistory.velocity[agentId].x.push(velocity.x);
+              newHistory.velocity[agentId].y.push(velocity.y);
+              newHistory.velocity[agentId].z.push(velocity.z);
             }
-
-            // Verify the data is numeric
-            if (typeof pos.x !== 'number' || typeof pos.y !== 'number' || typeof pos.z !== 'number') {
-              console.error(`Invalid position data for ${agentId}:`, pos);
-              return prev;
-            }
-
-            newData[agentId].x.push(pos.x);
-            newData[agentId].y.push(pos.y);
-            newData[agentId].z.push(pos.z);
-
-            console.log(`Updated position data for ${agentId}:`, {
-              x: newData[agentId].x.slice(-1),
-              y: newData[agentId].y.slice(-1),
-              z: newData[agentId].z.slice(-1)
-            });
-
-            return newData;
+            
+            return newHistory;
           });
 
-          setVelocityData(prev => {
-            const newData = { ...prev };
-            if (!newData[agentId]) {
-              newData[agentId] = {
-                x: [] as number[],
-                y: [] as number[],
-                z: [] as number[],
-                type: 'scatter3d' as const,
-                mode: 'lines+markers' as const,
-                marker: { size: 5 },
-                line: { width: 2 },
-                name: `${agentId} Velocity`
-              };
-            }
+          // Process simulation data for plots
+          const updatedPositionData: PlottedFrame = {};
+          const updatedVelocityData: PlottedFrame = {};
 
-            // Verify the data is numeric
-            if (typeof vel.x !== 'number' || typeof vel.y !== 'number' || typeof vel.z !== 'number') {
-              console.error(`Invalid velocity data for ${agentId}:`, vel);
-              return prev;
-            }
-
-            newData[agentId].x.push(vel.x);
-            newData[agentId].y.push(vel.y);
-            newData[agentId].z.push(vel.z);
-
-            console.log(`Updated velocity data for ${agentId}:`, {
-              x: newData[agentId].x.slice(-1),
-              y: newData[agentId].y.slice(-1),
-              z: newData[agentId].z.slice(-1)
-            });
-
-            return newData;
+          const baseData = () => ({
+            type: 'scatter3d',
+            mode: 'lines+markers',
+            marker: { size: 4 },
+            line: { width: 2 },
           });
 
-          // Update initial state if not already set
-          setInitialState(prev => {
-            if (Object.keys(prev).length === 0) {
-              return { [agentId]: { position: pos, velocity: vel } };
-            }
-            return prev;
-          });
-        });
+          // Convert history to plot data format
+          for (const [agentId, data] of Object.entries(plotHistory.position)) {
+            updatedPositionData[agentId] = {
+              ...baseData(),
+              x: data.x,
+              y: data.y,
+              z: data.z,
+              name: agentId,
+              type: 'scatter3d' as const,
+              mode: 'lines+markers' as const
+            };
+          }
+
+          for (const [agentId, data] of Object.entries(plotHistory.velocity)) {
+            updatedVelocityData[agentId] = {
+              ...baseData(),
+              x: data.x,
+              y: data.y,
+              z: data.z,
+              name: agentId,
+              type: 'scatter3d' as const,
+              mode: 'lines+markers' as const
+            };
+          }
+
+          setPositionData(Object.values(updatedPositionData));
+          setVelocityData(Object.values(updatedVelocityData));
+        };
+
+        eventSource.onerror = (error) => {
+          console.error('EventSource error:', error);
+          eventSource?.close();
+        };
+
       } catch (error) {
-        console.error("Error processing SSE message:", error, event.data);
+        console.error('Error setting up EventSource:', error);
       }
-    };
+    }
 
-    eventSource.onerror = (error) => {
-      console.error("EventSource error:", error);
-    };
+    setupEventSource();
 
     return () => {
-      eventSource.close();
+      canceled = true;
+      eventSource?.close();
     };
   }, []);
 
-  // Create plot data
-  const plotData = useMemo(() => {
-    console.log("Creating plot data with:", {
-      positionData: Object.fromEntries(
-        Object.entries(positionData).map(([k, v]) => [k, {
-          x: v.x.slice(-1),
-          y: v.y.slice(-1),
-          z: v.z.slice(-1)
-        }])
-      ),
-      velocityData: Object.fromEntries(
-        Object.entries(velocityData).map(([k, v]) => [k, {
-          x: v.x.slice(-1),
-          y: v.y.slice(-1),
-          z: v.z.slice(-1)
-        }])
-      )
-    });
-
-    const data: any[] = [];
-
-    Object.entries(positionData).forEach(([agentId, pos], index) => {
-      const vel = velocityData[agentId];
-      if (!vel) {
-        console.warn(`No velocity data for ${agentId}`);
-        return;
-      }
-
-      // Position plot
-      data.push({
-        ...pos,
-        marker: {
-          ...pos.marker,
-          color: index === 0 ? 'red' : 'blue',
-        },
-        line: {
-          ...pos.line,
-          color: index === 0 ? 'red' : 'blue',
-        },
-      });
-
-      // Velocity plot
-      data.push({
-        ...vel,
-        marker: {
-          ...vel.marker,
-          color: index === 0 ? 'orange' : 'green',
-        },
-        line: {
-          ...vel.line,
-          color: index === 0 ? 'orange' : 'green',
-        },
-      });
-    });
-
-    return data;
-  }, [positionData, velocityData]);
-
-  // Convert the plotted data objects to arrays for Plotly.
-  const positionPlots = Object.values(positionData);
-  const velocityPlots = Object.values(velocityData);
-
-  // Assign different colors to different bodies
-  if (positionPlots.length > 0 && positionPlots[0]) {
-    positionPlots[0].marker = { size: 6, color: 'red' };
-    positionPlots[0].line = { width: 3, color: 'red' };
-  }
-  if (positionPlots.length > 1 && positionPlots[1]) {
-    positionPlots[1].marker = { size: 6, color: 'blue' };
-    positionPlots[1].line = { width: 3, color: 'blue' };
-  }
-  if (velocityPlots.length > 0 && velocityPlots[0]) {
-    velocityPlots[0].marker = { size: 6, color: 'red' };
-    velocityPlots[0].line = { width: 3, color: 'red' };
-  }
-  if (velocityPlots.length > 1 && velocityPlots[1]) {
-    velocityPlots[1].marker = { size: 6, color: 'blue' };
-    velocityPlots[1].line = { width: 3, color: 'blue' };
-  }
-
-  console.log('Current position plots:', positionPlots);
-  console.log('Current velocity plots:', velocityPlots);
   return (
     
     <div
@@ -321,95 +235,103 @@ const App = () => {
         >
           Simulation Data
         </Heading>
-        <Link to={Routes.FORM} >Define new simulation parameters</Link>
+        <Link to={Routes.FORM} style={{ color: 'brown' }}>Define new simulation parameters</Link>
         <Separator size="4" my="5" />
+
+        {/* MC: Live Data Update */}
+        <Flex justify="center" width="100%" mb="4">
+          <Table.Root style={{ width: '800px', color: 'black', borderRadius: '8px', padding: '1rem' }}>
+            <Table.Header>
+              <Table.Row>
+                <Table.ColumnHeaderCell>Agent</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Current Position (x, y, z)</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Current Velocity (x, y, z)</Table.ColumnHeaderCell>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body style = {{color: 'black'}}>
+              {Object.entries(currentData).map(([agentId, data]: [string, any]) => {
+                if (agentId === "time" || agentId === "timeStep") return null;
+                const { position, velocity } = data;
+                return (
+                  <Table.Row key={agentId}>
+                    <Table.RowHeaderCell>{agentId}</Table.RowHeaderCell>
+                    <Table.Cell>
+                      ({position.x.toFixed(4)}, {position.y.toFixed(4)}, {position.z.toFixed(4)})
+                    </Table.Cell>
+                    <Table.Cell>
+                      ({velocity.x.toFixed(4)}, {velocity.y.toFixed(4)}, {velocity.z.toFixed(4)})
+                    </Table.Cell>
+                  </Table.Row>
+                );
+              })}
+            </Table.Body>
+          </Table.Root>
+        </Flex>
         <Flex direction="row" width="100%" justify="center">
           <Plot
             style={{ width: '45%', height: '100%', margin: '5px' }}
-            data={positionPlots}
+            data={positionData}
             layout={{
               title: 'Position',
               scene: {
                 xaxis: { title: 'X' },
                 yaxis: { title: 'Y' },
                 zaxis: { title: 'Z' },
-                camera: { eye: { x: 1.5, y: 1.5, z: 1.5 } }
               },
               autosize: true,
               dragmode: 'turntable',
-              showlegend: true,
-              uirevision: 'true',
             }}
             useResizeHandler
             config={{
               scrollZoom: true,
-              responsive: true,
-              displayModeBar: true
             }}
-            revision={positionPlots.reduce((acc, plot) => acc + plot.x.length, 0)}
           />
           <Plot
             style={{ width: '45%', height: '100%', margin: '5px' }}
-            data={velocityPlots}
+            data={velocityData}
             layout={{
               title: 'Velocity',
               scene: {
                 xaxis: { title: 'X' },
                 yaxis: { title: 'Y' },
                 zaxis: { title: 'Z' },
-                camera: { eye: { x: 1.5, y: 1.5, z: 1.5 } }
               },
               autosize: true,
               dragmode: 'turntable',
-              showlegend: true,
-              uirevision: 'true',
             }}
             useResizeHandler
             config={{
               scrollZoom: true,
-              responsive: true,
-              displayModeBar: true
             }}
-            revision={velocityPlots.reduce((acc, plot) => acc + plot.x.length, 0)}
           />
         </Flex>
-        <Flex justify="center" width="100%" m="4">
-          <Table.Root
-            style={{
-              width: '800px',
-            }}
-          >
-            {/* Table: https://www.radix-ui.com/themes/docs/components/table */}
+        {/* <Flex justify="center" width="100%" m="4">
+          <Table.Root style={{ width: '800px', backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '8px', padding: '1rem' }}>
             <Table.Header>
               <Table.Row>
                 <Table.ColumnHeaderCell>Agent</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Initial Position (x,y, z)</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Initial Velocity (x,y,z)</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Initial Position (x, y, z)</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Initial Velocity (x, y, z)</Table.ColumnHeaderCell>
               </Table.Row>
             </Table.Header>
-
             <Table.Body>
-              {Object.entries(initialState).flatMap(
-                  ([agentId, { position, velocity }]) => {
-                    if (position) {
-                    return (
-                <Table.Row key={agentId}>
-                  <Table.RowHeaderCell>{agentId}</Table.RowHeaderCell>
-                  <Table.Cell>
-                    ({position.x}, {position.y}, {position.z})
-                  </Table.Cell>
-                  <Table.Cell>
-                    ({velocity.x}, {velocity.y}, {velocity.z})
-                  </Table.Cell>
-                </Table.Row>
-                  );} else {
-                    return null;
-                  }
-                }
-              )}
+              {Object.entries(initialState).map(([agentId, { position, velocity }]) => {
+                if (!position) return null;
+                return (
+                  <Table.Row key={agentId}>
+                    <Table.RowHeaderCell>{agentId}</Table.RowHeaderCell>
+                    <Table.Cell>
+                      ({position.x.toFixed(4)}, {position.y.toFixed(4)}, {position.z.toFixed(4)})
+                    </Table.Cell>
+                    <Table.Cell>
+                      ({velocity.x.toFixed(4)}, {velocity.y.toFixed(4)}, {velocity.z.toFixed(4)})
+                    </Table.Cell>
+                  </Table.Row>
+                );
+              })}
             </Table.Body>
           </Table.Root>
-        </Flex>
+        </Flex> */}
       </Flex>
     </div>
   );

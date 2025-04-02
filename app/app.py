@@ -177,7 +177,7 @@ def stream_simulation():
 
         def event_stream():
             try:
-                # Initial heartbeat
+                #Initial heartbeat
                 yield f"data: {json.dumps({'heartbeat': True})}\n\n"
                 
                 # Speed parameter (higher = faster simulation)
@@ -185,25 +185,21 @@ def stream_simulation():
                 
                 for i, cycle in enumerate(simulator.simulate(iterations=500)):
                     try:
-                        if not cycle:  # Skip empty cycles
-                            continue
-                            
-                        # Send simulation data
+                        logging.info(f"Sending cycle {i}: {cycle}")
                         yield f"data: {json.dumps(cycle)}\n\n"
                         
-                        # Send heartbeat every 10 cycles
-                        if i > 0 and i % 10 == 0:
+                        # Sending hearbeat every 10 cycles
+                        if i % 10 == 0:
                             yield f"data: {json.dumps({'heartbeat': True})}\n\n"
                             
-                        # Control simulation speed
-                        time.sleep(max(0.01, 0.05 / speed))
-                        
+                        # Faster simulation with minimal delay
+                        time.sleep(max(0.01, 0.05 / speed))  # Reduced minimum delay and added speed control
                     except Exception as e:
                         logging.error(f"Error in cycle {i}: {str(e)}")
                         yield f"data: {json.dumps({'error': str(e)})}\n\n"
                         continue
-                
-                # Final completion message
+                        
+                # Finl messge for completion
                 yield f"data: {json.dumps({'complete': True})}\n\n"
                 
             except Exception as e:
