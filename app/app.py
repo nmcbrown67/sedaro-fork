@@ -199,7 +199,7 @@ def stream_simulation():
                         yield f"data: {json.dumps({'error': str(e)})}\n\n"
                         continue
                         
-                # Finl messge for completion
+                # Final messge for completion
                 yield f"data: {json.dumps({'complete': True})}\n\n"
                 
             except Exception as e:
@@ -209,6 +209,8 @@ def stream_simulation():
         return Response(
             stream_with_context(event_stream()),
             mimetype="text/event-stream",
+
+            # MC: No idea what these do but adding them fixed the error
             headers={
                 "Cache-Control": "no-cache",
                 "Connection": "keep-alive",

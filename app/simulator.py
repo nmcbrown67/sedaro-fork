@@ -155,7 +155,7 @@ class Simulator:
             case "Tuple":
                 raise Exception(f"Tuple production not yet implemented")
 
-    #MC: Changed simulate function to work in yielding agent/state data in cycles instead of all at onces
+    #MC: Changed simulate function to work in yielding agent/state data in cycles instead of all at once
     def simulate(self, iterations: int = 500):
         """Simulate the universe for a given number of iterations."""
         for iteration in range(iterations):
